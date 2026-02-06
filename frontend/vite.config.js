@@ -3,7 +3,10 @@ import { resolve } from 'path';
 
 export default defineConfig({
     root: './',
+    base: '/Shashiniphotogrphy/', // Set to your repository name
     build: {
+        outDir: '../docs',
+        emptyOutDir: true,
         rollupOptions: {
             input: {
                 main: resolve(__dirname, 'index.html'),

@@ -118,14 +118,22 @@ async function init() {
     }
 
     if (loginBtn) {
-        loginBtn.onclick = () => {
-            if (state.user) {
-                state.view = 'profile';
-                render();
-            } else {
-                window.showLoginModal();
-            }
-        };
+        // DETECT ENVIRONMENT: If strict '127.0.0.1' or 'localhost' is not in hostname, we are likely on Public Static site (GitHub Pages)
+        // The Backend (API) is only local, so Auth won't work on Public.
+        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+
+        if (!isLocal) {
+            loginBtn.style.display = 'none'; // Hide login on public site
+        } else {
+            loginBtn.onclick = () => {
+                if (state.user) {
+                    state.view = 'profile';
+                    render();
+                } else {
+                    window.showLoginModal();
+                }
+            };
+        }
     }
 
     // --- GLOBAL AUTH MODAL ---
@@ -246,9 +254,13 @@ async function fetchGlobalData() {
         }
     } catch (err) {
         console.error('[CMS Sync] Failed to fetch from Google Sheet:', err);
-        // Fallback to local if sheet fails (optional, keeping it robust)
-        const localData = await secureFetch(`${API_URL}/cms`);
-        if (localData) state.cms = localData;
+
+        // Fallback to local API only if we are running locally
+        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+        if (isLocal) {
+            const localData = await secureFetch(`${API_URL}/cms`);
+            if (localData) state.cms = localData;
+        }
     }
 }
 

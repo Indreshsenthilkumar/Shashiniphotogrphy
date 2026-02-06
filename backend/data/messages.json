@@ -1,0 +1,57 @@
+[
+  {
+    "id": "1770348723606491",
+    "sender": "akash",
+    "mobile": "9445285507",
+    "email": "indresh2607@gmail.com",
+    "text": "hlooo new",
+    "timestamp": "2026-02-02T04:23:07.440Z",
+    "read": false,
+    "status": "received",
+    "replies": []
+  },
+  {
+    "id": "1770348723606194",
+    "sender": "INDRESH S",
+    "mobile": "9445285507",
+    "email": "indresh2607@gmail.com",
+    "text": "hlooo to bit",
+    "timestamp": "2026-02-02T04:43:08.164Z",
+    "read": false,
+    "status": "received",
+    "replies": []
+  },
+  {
+    "id": "1770348723606169",
+    "sender": "indresh",
+    "mobile": "1234567899",
+    "email": "",
+    "text": "new",
+    "timestamp": "2026-02-03T08:38:52.559Z",
+    "read": false,
+    "status": "cleared",
+    "replies": []
+  },
+  {
+    "id": "1770389836750384",
+    "sender": "indresh",
+    "mobile": "9445285507",
+    "email": "",
+    "text": "good night",
+    "timestamp": "2026-02-06T14:57:10.522Z",
+    "read": false,
+    "status": "received",
+    "replies": []
+  },
+  {
+    "id": "1770389855235436",
+    "sender": "Unknown",
+    "mobile": "9445285507",
+    "email": "",
+    "text": "good night",
+    "timestamp": "2026-02-06T14:57:29.793Z",
+    "read": false,
+    "status": "cleared",
+    "replies": []
+  }
+]

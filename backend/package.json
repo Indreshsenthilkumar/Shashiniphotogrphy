@@ -1,0 +1,26 @@
+{
+    "name": "photography-studio-backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "start": "node --openssl-legacy-provider server.js",
+        "dev": "nodemon --ignore data/ --exec \"node --openssl-legacy-provider\" server.js"
+    },
+    "dependencies": {
+        "atomic-sleep": "^1.0.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "express-rate-limit": "^8.2.1",
+        "googleapis": "^126.0.0",
+        "helmet": "^8.1.0",
+        "node-fetch": "^2.7.0",
+        "striptags": "^3.2.0",
+        "validator": "^13.15.26",
+        "write-file-atomic": "^7.0.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}

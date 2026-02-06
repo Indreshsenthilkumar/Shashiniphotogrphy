@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shashini Photography | Admin Control Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/metropolis.min.css">
+    <style>
+        .tab-content {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .message-thread {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 32px;
+            background: var(--bg-color);
+            border-radius: 24px;
+        }
+
+        .msg-bubble {
+            max-width: 80%;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .msg-client {
+            background: var(--white);
+            color: var(--text-primary);
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+        }
+
+        .msg-admin {
+            background: var(--accent);
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            #overview-stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (min-width: 600px) and (max-width: 1024px) {
+            #overview-stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="admin-body">
+    <header class="main-header">
+        <div class="header-container">
+            <img src="./logo.png" alt="Shashini Photography" class="logo-img">
+            <span style="font-family: 'Metropolis', sans-serif; font-weight: 700; letter-spacing: 2px;">SHASHINI
+                STUDIO</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="nav-tab active" data-tab="overview">OVERVIEW</a>
+            <a href="#" class="nav-tab" data-tab="vaults">VAULTS</a>
+            <a href="#" class="nav-tab" data-tab="bookings">BOOKINGS</a>
+            <a href="#" class="nav-tab" data-tab="cms">STUDIO CMS</a>
+            <a href="#" class="nav-tab" data-tab="messages">MESSAGES</a>
+        </nav>
+        <div class="header-actions">
+            <button class="theme-toggle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <div class="profile-btn">
+                <div class="profile-icon">A</div>
+                <span>ADMIN</span>
+            </div>
+        </div>
+        </div>
+    </header>
+
+    <main id="app" class="container" style="margin-top: 150px;">
+        <!-- OVERVIEW -->
+        <section id="overview" class="tab-content active slide-up">
+            <div class="section-header" style="margin-bottom: 40px;">
+                <div>
+                    <span class="section-subtitle">PHOTOGRAPHY ANALYTICS</span>
+                    <h2 class="section-title">Dashboard Overview</h2>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <button class="cta-btn" onclick="window.switchTab('vaults')"
+                        style="padding: 12px 25px; border-radius: 12px; font-size: 11px; background: var(--accent); color: white;">+
+                        NEW VAULT</button>
+                </div>
+            </div>
+
+            <!-- New: 4-Column Stat Grid -->
+            <div id="overview-stats-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; margin-bottom: 48px;">
+                <!-- Dynamically rendered stats -->
+            </div>
+
+            <div class="grid-2" style="grid-template-columns: 1.6fr 1fr; gap: 40px; align-items: start;">
+                <div class="overview-main-content" style="display: flex; flex-direction: column; gap: 40px;">
+                    <!-- Activity Feed Card -->
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+                            <h3 style="font-size: 24px; margin: 0;">Recent Intelligence</h3>
+                            <button onclick="window.switchTab('messages')"
+                                style="background: none; border: none; font-size: 10px; font-weight: 800; color: var(--accent); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">View
+                                All Activity →</button>
+                        </div>
+                        <div id="recent-activity-feed" style="display: flex; flex-direction: column; gap: 20px;">
+                            <!-- Dynamically rendered activity -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-sidebar" style="display: flex; flex-direction: column; gap: 40px;">
+                    <!-- Next Session Focus Card -->
+                    <div id="next-session-focus"></div>
+
+                    <!-- Quick Summary Card -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 25px; font-size: 20px;">Studio Status</h3>
+                        <div id="studio-quick-summary"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VAULTS -->
+        <section id="vaults" class="tab-content slide-up">
+            <div class="section-header" style="margin-bottom: 25px; align-items: flex-end;">
+                <div>
+                    <span class="section-subtitle" style="letter-spacing: 3px;">PRIVATE COLLECTIONS</span>
+                    <h2 class="section-title" style="font-size: 36px; font-family: 'Metropolis', sans-serif;">Vault
+                        History</h2>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div style="display: flex; background: #f5f5f5; padding: 4px; border-radius: 12px; gap: 4px;">
+                        <button class="view-toggle-btn active" onclick="window.setViewMode('list')">List</button>
+                        <button class="view-toggle-btn" onclick="window.setViewMode('cards')">Cards</button>
+                    </div>
+                    <a href="https://docs.google.com/spreadsheets/d/1_4hhaBi7b1UGe5v1VArCqkZGyT3P5UtCZFCb98lF62k/edit?gid=0#gid=0"
+                        target="_blank" class="cta-btn"
+                        style="padding: 12px 20px; border-radius: 15px; background: #27AE60; border-color: #27AE60; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        📊 Open Sheet
+                    </a>
+                    <button class="cta-btn" id="open-link_vault_btn"
+                        style="padding: 12px 25px; border-radius: 15px; background: var(--accent); color: white; border: none; box-shadow: 0 10px 20px rgba(184, 156, 125, 0.2); transition: all 0.3s;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 25px rgba(184, 156, 125, 0.3)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 20px rgba(184, 156, 125, 0.2)'">
+                        + LINK NEW VAULT
+                    </button>
+                </div>
+            </div>
+
+            <div id="vaults-wrapper" class="card" style="padding: 0; overflow: hidden;">
+                <!-- Minimalist Toolbar Header -->
+                <div
+                    style="padding: 32px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+                    <div style="position: relative; width: 400px;">
+                        <span
+                            style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.5;">🔍</span>
+                        <input type="text" id="vault-search"
+                            style="width: 100%; padding: 12px 0 12px 40px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none;"
+                            placeholder="Search by ID, Title or Client...">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <select id="vault-date-filter" class="login-input"
+                            style="width: 100px; margin-bottom:0; font-size: 11px; font-weight: 800; border-radius: 10px; height: 38px; padding: 0 15px; background: #fff;">
+                            <option value="all">Date</option>
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                        </select>
+                        <select id="vault-status-filter" class="login-input"
+                            style="width: 155px; margin-bottom:0; font-size: 11px; font-weight: 800; border-radius: 10px; height: 38px; padding: 0 15px; background: #fff;">
+                            <option value="all">All Items</option>
+                            <option value="pending">Selection in Progress</option>
+                            <option value="finalized">Finalized</option>
+                            <option value="albumpending">Album in Progress</option>
+                            <option value="albumcompleted">Album Completed</option>
+                            <option value="delivered">Delivered</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="vaults-container" style="min-height: 200px; background: transparent; padding: 24px;"></div>
+            </div>
+        </section>
+
+        <!-- BOOKINGS -->
+        <section id="bookings" class="tab-content slide-up">
+            <div class="card" style="padding: 80px; text-align: center; margin-top: 20px;">
+                <div style="font-size: 64px; margin-bottom: 30px;">📅</div>
+                <h2 style="font-family: 'Metropolis', sans-serif; font-size: 32px; margin-bottom: 15px;">Bookings &
+                    Availability</h2>
+                <p
+                    style="color: #666; font-size: 16px; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    All bookings, availability, and session types are managed exclusively through Cal.com to ensure a
+                    single source of truth.
+                </p>
+                <div
+                    style="background: rgba(184, 156, 125, 0.05); padding: 25px; border-radius: 20px; border: 1px solid rgba(184, 156, 125, 0.1); display: inline-block; margin-bottom: 40px;">
+                    <p style="font-size: 13px; font-weight: 700; color: var(--accent); margin: 0; letter-spacing: 1px;">
+                        ⚠️ NO LOCAL BOOKING DATA IS STORED ON THIS WEBSITE
+                    </p>
+                </div>
+                <br>
+                <a href="https://cal.com/dashboard" target="_blank" class="cta-btn"
+                    style="padding: 18px 40px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(184, 156, 125, 0.3);">
+                    OPEN CAL.COM DASHBOARD ↗
+                </a>
+            </div>
+        </section>
+
+        <!-- CMS -->
+        <section id="cms" class="tab-content slide-up">
+            <div class="section-header">
+                <div>
+                    <span class="section-subtitle">MANAGEMENT</span>
+                    <h2 class="section-title">Photography CMS</h2>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Gallery Management</h3>
+
+                <!-- Upload Method Tabs -->
+                <div style="display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid var(--border-color);">
+                    <button id="tab-url" class="upload-tab active" onclick="switchUploadTab('url')"
+                        style="padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 700; font-size: 11px; border-bottom: 3px solid var(--accent); color: var(--accent);">📎
+                        FROM URL</button>
+                    <button id="tab-file" class="upload-tab" onclick="switchUploadTab('file')"
+                        style="padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 700; font-size: 11px; border-bottom: 3px solid transparent; color: #999;">📁
+                        FROM DEVICE</button>
+                    <button id="tab-youtube" class="upload-tab" onclick="switchUploadTab('youtube')"
+                        style="padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 700; font-size: 11px; border-bottom: 3px solid transparent; color: #999;">🎬
+                        YOUTUBE VIDEO</button>
+                </div>
+
+                <!-- URL Upload (Existing) -->
+                <div id="upload-url" class="upload-method" style="display: flex; gap: 10px; margin: 20px 0 40px;">
+                    <input type="text" id="cms-url" class="login-input" style="flex:2; margin-bottom:0;"
+                        placeholder="Image URL">
+                    <input type="text" id="cms-title" class="login-input" style="flex:1; margin-bottom:0;"
+                        placeholder="Title">
+                    <button class="cta-btn" id="cms-add">ADD PHOTO</button>
+                </div>
+
+                <!-- YouTube Video Upload -->
+                <div id="upload-youtube" class="upload-method" style="display: none; gap: 10px; margin: 20px 0 40px;">
+                    <input type="text" id="cms-youtube-url" class="login-input" style="flex:2; margin-bottom:0;"
+                        placeholder="Paste YouTube Video Link (e.g. https://www.youtube.com/watch?v=...)">
+                    <input type="text" id="cms-youtube-title" class="login-input" style="flex:1; margin-bottom:0;"
+                        placeholder="Video Title">
+                    <button class="cta-btn" id="cms-add-youtube" style="background: #FF0000; border-color: #FF0000;">ADD
+                        VIDEO</button>
+                </div>
+
+                <!-- File Upload (New) -->
+                <div id="upload-file" class="upload-method" style="display: none; margin: 20px 0 40px;">
+                    <div id="drop-zone"
+                        style="border: 2px dashed var(--border-color); border-radius: 20px; padding: 40px; text-align: center; background: var(--card-bg); cursor: pointer; transition: all 0.3s ease;">
+                        <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+                        <p style="font-size: 48px; margin: 0;">📸</p>
+                        <p style="font-weight: 700; margin: 10px 0 5px; color: var(--text-primary);">Drop images here or
+                            click to browse</p>
+                        <p style="font-size: 11px; color: #999;">Supports JPG, PNG, WebP • Max 5MB per file</p>
+                    </div>
+                    <div id="preview-container" style="display: none; margin-top: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <p style="font-size: 11px; font-weight: 700; color: #999;">PREVIEW</p>
+                            <button class="cta-btn" id="upload-files-btn"
+                                style="padding: 8px 20px; font-size: 11px;">UPLOAD SELECTED</button>
+                        </div>
+                        <div id="preview-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Section Management -->
+                <div id="hero-manager" class="card"
+                    style="margin-bottom: 40px; padding: 30px; border-radius: 20px; background: var(--white);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">Hero Section Control
+                            </h3>
+                            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Manage banners, videos, and
+                                timing for your home page.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="text-align: right;">
+                                <label
+                                    style="display: block; font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase;">Change
+                                    Interval (sec)</label>
+                                <input type="number" id="hero-interval-input" class="login-input"
+                                    style="width: 80px; margin: 0; padding: 5px 10px; height: 32px; font-size: 13px;"
+                                    min="1" max="60">
+                            </div>
+                            <button class="cta-btn" onclick="saveHeroConfig()"
+                                style="padding: 8px 15px; font-size: 11px; height: 32px; border-radius: 8px; margin-top: 15px;">SAVE
+                                CONFIG</button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;"
+                        id="hero-slides-container">
+                        <!-- Hero slides dynamically generated here -->
+                    </div>
+
+                    <div
+                        style="margin-top: 20px; padding-top: 20px; border-top: 1px dotted #eee; display: flex; gap: 15px; align-items: center;">
+                        <button class="cta-btn" onclick="document.getElementById('hero-file-input').click()"
+                            style="background: var(--bg-color); color: var(--text-primary); border-color: var(--border-color); font-size: 11px; padding: 10px 20px;">+
+                            ADD HERO MEDIA</button>
+                        <input type="file" id="hero-file-input" style="display: none;" accept="image/*,video/*" multiple
+                            onchange="previewHeroUpload(event)">
+                        <span style="font-size: 11px; color: #999; font-weight: 600;">Supports HD Images & MP4
+                            Videos</span>
+                    </div>
+                </div>
+
+                <div class="section-header" style="margin-top: 20px;">
+                    <div>
+                        <span class="section-subtitle">GALLERY</span>
+                        <h2 class="section-title">The Master Exhibition</h2>
+                    </div>
+                </div>
+                <div id="cms-gallery"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px 0;">
+                    <!-- Dynamically rendered gallery items -->
+                </div>
+            </div>
+        </section>
+
+        <!-- MESSAGES -->
+        <section id="messages" class="tab-content slide-up">
+            <div class="section-header">
+                <div>
+                    <span class="section-subtitle">INBOX</span>
+                    <h2 class="section-title">Message Center</h2>
+                </div>
+            </div>
+
+            <div id="messages-wrapper" class="card" style="padding: 0; overflow: hidden;">
+                <!-- Minimalist Toolbar Header (Matches Vaults Style) -->
+                <div
+                    style="padding: 32px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+                    <div style="position: relative; width: 400px;">
+                        <span
+                            style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.5;">🔍</span>
+                        <input type="text" id="message-search"
+                            style="width: 100%; padding: 12px 0 12px 40px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none;"
+                            placeholder="Search enquiries by name or mobile...">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <select id="message-status-filter" class="login-input"
+                            style="width: 155px; margin-bottom:0; font-size: 11px; font-weight: 800; border-radius: 10px; height: 38px; padding: 0 15px; background: #fff; border: 1px solid #eee;">
+                            <option value="all">All Enquiries</option>
+                            <option value="received">Received</option>
+                            <option value="in progress">In Progress</option>
+                            <option value="cleared">Cleared</option>
+                        </select>
+                        <a href="https://docs.google.com/spreadsheets/d/1_4hhaBi7b1UGe5v1VArCqkZGyT3P5UtCZFCb98lF62k/edit?gid=1264823148#gid=1264823148"
+                            target="_blank" class="cta-btn"
+                            style="padding: 10px 20px; border-radius: 15px; background: #27AE60; border-color: #27AE60; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                            📊 VIEW DATABASE
+                        </a>
+                    </div>
+                </div>
+                <div id="messages-container" style="min-height: 200px; background: transparent; padding: 24px;"></div>
+            </div>
+            <div id="messages-table-container" style="display: none;"></div>
+        </section>
+    </main>
+
+    <!-- Modal for Linking Vault -->
+    <div id="vault-modal" class="modal-overlay" style="display: none;">
+        <div class="login-modal" style="text-align: left; padding: 0; overflow: hidden; max-width: 550px;">
+            <div style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); padding: 30px; color: white;">
+                <h2 style="margin: 0; font-family: 'Metropolis', sans-serif; font-size: 24px;">Link Client Vault</h2>
+                <p
+                    style="margin: 5px 0 0 0; font-size: 11px; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                    CREATE SECURE DIGITAL COLLECTION</p>
+            </div>
+
+            <div style="padding: 40px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div>
+                        <label
+                            style="font-size: 10px; font-weight:800; color:var(--accent); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">🔗
+                            Google Drive Folder Link</label>
+                        <input type="text" id="link-url" class="login-input"
+                            placeholder="Paste drive folder URL here..."
+                            style="margin-bottom: 0; font-size: 14px; border-radius: 12px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label
+                                style="font-size: 10px; font-weight:800; color:#999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">👤
+                                Customer Mobile</label>
+                            <input type="tel" id="link-mobile" class="login-input" placeholder="9876543210"
+                                maxlength="10" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)"
+                                style="margin-bottom: 0; font-size: 14px; border-radius: 12px;">
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 10px; font-weight:800; color:#999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">📛
+                                Customer Name</label>
+                            <input type="text" id="link-name" class="login-input" placeholder="e.g. Rahul Sharma"
+                                style="margin-bottom: 0; font-size: 14px; border-radius: 12px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label
+                                style="font-size: 10px; font-weight:800; color:#999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">🎞️
+                                Session Type</label>
+                            <select id="link-session-type" class="login-input"
+                                style="background:#fff; margin-bottom: 0; font-size: 14px; border-radius: 12px; cursor: pointer;">
+                                <!-- Dynamically Populated -->
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 10px; font-weight:800; color:#999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">📝
+                                Session Title</label>
+                            <input type="text" id="link-title" class="login-input" placeholder="e.g. Wedding Highlights"
+                                style="margin-bottom: 0; font-size: 14px; border-radius: 12px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 35px; display: flex; gap: 15px;">
+                    <button class="cta-btn" onclick="document.getElementById('vault-modal').style.display='none'"
+                        style="flex: 1; background: #f5f5f5; color: #666; border: none; font-size: 11px;">CANCEL</button>
+                    <button class="cta-btn" id="save-link"
+                        style="flex: 2; background: var(--accent); color: white; border: none; font-size: 11px; box-shadow: 0 10px 20px rgba(184, 156, 125, 0.2);">ACTIVATE
+                        VAULT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Vault -->
+    <div id="edit-vault-modal" class="modal-overlay" style="display: none;">
+        <div class="login-modal" style="text-align: left; width: 90%; max-width: 500px; padding: 40px;">
+            <h2 style="text-align: center; margin-bottom: 25px;">Edit Vault Details</h2>
+            <input type="hidden" id="edit-vault-id">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label
+                        style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">CUSTOMER
+                        NAME</label>
+                    <input type="text" id="edit-vault-name" class="login-input" style="width:100%; margin-bottom:0;">
+                </div>
+                <div>
+                    <label
+                        style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">CLIENT
+                        MOBILE</label>
+                    <input type="tel" id="edit-vault-mobile" class="login-input" style="width:100%; margin-bottom:0;"
+                        maxlength="10" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                <div>
+                    <label
+                        style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">SESSION
+                        TYPE</label>
+                    <select id="edit-vault-type" class="login-input"
+                        style="background:#fff; width:100%; margin-bottom:0;">
+                        <!-- Dynamically Populated -->
+                    </select>
+                </div>
+                <div>
+                    <label
+                        style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">CREATION
+                        DATE</label>
+                    <input type="date" id="edit-vault-date" class="login-input" style="width:100%; margin-bottom:0;">
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">SESSION
+                    TITLE</label>
+                <input type="text" id="edit-vault-title" class="login-input" style="width:100%;">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label style="font-size: 10px; font-weight:700; color:#999; display:block; margin-bottom:5px;">DRIVE
+                    FOLDER ID</label>
+                <input type="text" id="edit-vault-drive-id" class="login-input" style="width:100%;"
+                    placeholder="e.g. 1mNruZnpDcydlrSyhz...">
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button class="cta-btn" onclick="document.getElementById('edit-vault-modal').style.display='none'"
+                    style="background: #f4f4f4; color: #666; flex: 1;">CANCEL</button>
+                <button class="cta-btn" id="update-vault-btn" style="flex: 2;">SAVE CHANGES</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Booking -->
+    <div id="edit-booking-modal" class="modal-overlay" style="display: none;">
+        <div class="login-modal" style="text-align: left; width: 450px;">
+            <h2 style="text-align: center; margin-bottom: 30px;">Edit Booking Details</h2>
+            <input type="hidden" id="edit-booking-id">
+
+            <div class="grid-2" style="gap:15px; grid-template-columns: 1fr 1fr;">
+                <div>
+                    <label style="font-size: 10px; font-weight:700; color:#999;">CLIENT NAME</label>
+                    <input type="text" id="edit-booking-name" class="login-input">
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight:700; color:#999;">MOBILE NUMBER</label>
+                    <input type="tel" id="edit-booking-mobile" class="login-input" maxlength="10"
+                        oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label style="font-size: 10px; font-weight:700; color:#999;">EMAIL ADDRESS</label>
+                <input type="email" id="edit-booking-email" class="login-input" style="width: 100%;">
+            </div>
+
+            <div class="grid-2" style="gap:15px; grid-template-columns: 1fr 1fr; margin-top: 15px;">
+                <div>
+                    <label style="font-size: 10px; font-weight:700; color:#999;">SESSION TYPE</label>
+                    <select id="edit-booking-type" class="login-input" style="background:#fff;">
+                        <!-- Dynamically Populated -->
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight:700; color:#999;">SESSION DATE</label>
+                    <input type="date" id="edit-booking-date" class="login-input">
+                </div>
+            </div>
+
+            <label style="font-size: 10px; font-weight:700; color:#999; margin-top: 15px; display: block;">NOTES</label>
+            <textarea id="edit-booking-notes" class="login-input"
+                style="height: 80px; padding: 12px; resize: none;"></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="cta-btn" onclick="document.getElementById('edit-booking-modal').style.display='none'"
+                    style="background: #f4f4f4; color: #666; flex: 1;">CANCEL</button>
+                <button class="cta-btn" id="update-booking-btn-new" style="flex: 2;">SAVE CHANGES</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for Previews -->
+    <div id="admin-lightbox" class="lightbox-overlay" style="display: none;" onclick="this.style.display='none'">
+        <div class="lightbox-container" onclick="event.stopPropagation()">
+            <div class="lightbox-content">
+                <img id="admin-lightbox-image" src="" style="display: none; border-radius: 15px;">
+                <video id="admin-lightbox-video" src="" style="display: none; border-radius: 15px; max-height: 80vh;"
+                    controls></video>
+                <div id="admin-lightbox-youtube" style="display: none; width: 80vw; aspect-ratio: 16/9;"></div>
+                <h3 id="admin-lightbox-title"
+                    style="color: white; margin-top: 20px; font-family: 'Metropolis', sans-serif;"></h3>
+            </div>
+            <button class="cta-btn" onclick="document.getElementById('admin-lightbox').style.display='none'"
+                style="position: absolute; top: -50px; right: 0; background: rgba(255,255,255,0.1); border: none; color: white;">CLOSE
+                ✕</button>
+        </div>
+    </div>
+
+    <script type="module" src="/admin.js"></script>
+</body>
+
+</html>

@@ -680,33 +680,51 @@ body.dark-mode .login-input {
     }
 
     body {
-        padding-bottom: 70px;
-        /* Space for mobile floating nav if added */
+        padding-bottom: 80px;
+        /* Space for mobile floating nav / bottom bar */
     }
 
-    .header {
+    /* UNIFIED MOBILE HEADER STYLES */
+    .header,
+    .main-header {
         height: var(--header-height);
         padding: 0 15px;
         justify-content: space-between;
     }
 
+    .header-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Logo Scaling */
     .logo {
         gap: 8px;
-        /* Tighter gap for mobile */
     }
 
     .logo-img {
-        height: 40px;
-        /* Smaller logo for app-like fee */
+        height: 36px;
+        /* Smaller for mobile */
+    }
+
+    /* Admin Header Title Scaling */
+    .main-header span {
+        font-size: 14px;
+        letter-spacing: 1px;
     }
 
     .logo-text {
         display: flex;
-        /* Show text on mobile */
     }
 
+    .brand-name {
+        font-size: 14px;
+    }
+
+    /* Header Actions Scaling */
     .header-actions {
-        gap: 8px;
+        gap: 10px;
     }
 
     .profile-btn {
@@ -717,9 +735,66 @@ body.dark-mode .login-input {
 
     .profile-text-group {
         display: none;
-        /* Only show icon on mobile */
     }
 
+    /* CLIENT PAGE SPECIFIC: Hide Desktop Nav (Hamburger used instead) */
+    .header .nav-links {
+        display: none;
+    }
+
+    /* ADMIN PAGE SPECIFIC: Turn Nav into Bottom Bar */
+    .main-header .nav-links {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50px;
+        padding: 0 20px;
+        height: 60px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        z-index: 2000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0;
+        overflow-x: auto;
+    }
+
+    /* Adjust Admin Nav Links for Bottom Bar */
+    .main-header .nav-link,
+    .main-header .nav-tab {
+        font-size: 9px;
+        padding: 10px;
+        white-space: nowrap;
+        opacity: 0.6;
+    }
+
+    .main-header .nav-link.active,
+    .main-header .nav-tab.active {
+        opacity: 1;
+        color: var(--accent);
+        border-bottom: none;
+        /* Remove desktop underline */
+        font-weight: 800;
+    }
+
+    /* Dark Mode Support for Bottom Bar */
+    body.dark-mode .main-header .nav-links {
+        background: rgba(30, 30, 30, 0.95);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .main-header {
+        justify-content: space-between;
+    }
+
+
+    /* CONTAINER & LAYOUT */
     .container {
         padding: 24px 15px;
         border-radius: 24px 24px 0 0;
@@ -733,44 +808,28 @@ body.dark-mode .login-input {
         margin-bottom: 24px;
         text-align: left !important;
         align-items: flex-start !important;
-    }
-
-    .section-title {
-        font-size: 22px;
-    }
-
-    .section-subtitle {
-        font-size: 9px;
-    }
-
-    /* Make buttons full width on small screens */
-    .btn-group-hero {
         flex-direction: column;
-        width: 100%;
-    }
-
-    .btn-puzzle {
-        width: 100%;
-        padding: 16px;
-    }
-
-    /* Responsive Grid Utilities */
-    .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-
-    .hero-title {
-        font-size: 36px;
+        gap: 15px;
     }
 
     .section-title {
         font-size: 26px;
     }
 
-    .header-container {
-        padding: 0;
+    .section-subtitle {
+        font-size: 9px;
+    }
+
+    /* Responsive Grid Utilities */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        /* Stack on mobile */
+        gap: 20px;
+    }
+
+    .hero-title {
+        font-size: 36px;
     }
 
     .hamburger-btn {
@@ -789,7 +848,6 @@ body.dark-mode .login-input {
         width: 40px;
         height: 40px;
         box-shadow: none;
-        /* Cleaner on mobile */
     }
 }
 

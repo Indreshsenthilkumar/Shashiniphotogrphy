@@ -791,6 +791,145 @@ body.dark-mode .login-input {
 
     .main-header {
         justify-content: space-between;
+        /* --- ADMIN MOBILE CLEANUP --- */
+
+        /* 1. Main Container & Spacing */
+        .admin-body {
+            background: #f8f9fa;
+            /* Softer sizing background */
+        }
+
+        #app.container {
+            padding: 15px !important;
+            margin-top: -20px !important;
+            /* Pull up closer to header */
+        }
+
+        /* 2. Overview Stats - Stack Cleanly */
+        #overview-stats-grid {
+            grid-template-columns: 1fr !important;
+            /* Single column stack */
+            gap: 15px !important;
+            margin-bottom: 30px !important;
+        }
+
+        .stat-card {
+            padding: 20px !important;
+            /* Reduce padding */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-card .stat-value {
+            order: 2;
+            font-size: 24px !important;
+        }
+
+        .stat-card div:first-child {
+            order: 1;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* 3. Toolbars (Vaults/Messages) - Stack Vertically */
+        #vaults-wrapper>div:first-child,
+        #messages-wrapper>div:first-child {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 20px !important;
+            gap: 15px !important;
+        }
+
+        #vault-search,
+        #message-search {
+            padding-left: 10px !important;
+            /* Remove huge padding if icon is hidden/moved */
+        }
+
+        /* Wrapper for Search Input parent div */
+        #vaults-wrapper>div:first-child>div:first-child,
+        #messages-wrapper>div:first-child>div:first-child {
+            width: 100% !important;
+        }
+
+        /* Filters Row */
+        #vaults-wrapper>div:first-child>div:last-child,
+        #messages-wrapper>div:first-child>div:last-child {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            /* 2 cols for filters */
+            gap: 10px !important;
+        }
+
+        .view-toggle-btn {
+            display: none !important;
+            /* Hide list/card toggle on mobile - Force Cards */
+        }
+
+        /* 4. Hide Tables Totally */
+        .admin-table {
+            display: none !important;
+        }
+
+        /* 5. Force Cards Container Styles */
+        #vaults-container,
+        #messages-container {
+            padding: 15px !important;
+        }
+
+        #vaults-container>div {
+            grid-template-columns: 1fr !important;
+            /* Single column cards */
+        }
+
+        /* 6. Modals on Mobile */
+        .login-modal {
+            width: 95% !important;
+            padding: 25px !important;
+            border-radius: 20px !important;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+
+        /* 7. CMS Section Cleanup */
+        .upload-tab {
+            padding: 10px 15px !important;
+            font-size: 10px !important;
+        }
+
+        #upload-url,
+        #upload-youtube {
+            flex-direction: column;
+        }
+
+        #hero-manager {
+            padding: 20px !important;
+        }
+
+        #hero-manager>div:first-child {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 8. Make 'Link New Vault' button sticky or prominent */
+        .section-header .cta-btn {
+            width: 100%;
+            /* Full width buttons for actionable headers */
+            margin-top: 10px;
+        }
+
+        /* 9. Hide less critical elements on mobile */
+        .footer-main {
+            padding-bottom: 90px;
+            /* Space for bottom nav */
+        }
     }
 
 

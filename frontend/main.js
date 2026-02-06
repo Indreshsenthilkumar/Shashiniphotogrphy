@@ -77,6 +77,11 @@ async function init() {
         if (state.view === view) return;
         state.view = view;
 
+        // Force Card View on Mobile (Tables are too messy)
+        if (window.innerWidth < 768) {
+            state.viewMode = 'cards';
+        }
+
         // Toggle home-view class for transparent header
         document.body.classList.toggle('home-view', view === 'home');
 

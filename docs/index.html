@@ -13,7 +13,11 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <!-- Styles -->
+    <!-- Styles -->
+    <link rel="stylesheet" href="./style.css?v=2.2">
+    <link rel="stylesheet" href="./vault-viewer.css?v=1.1">
+    <link rel="stylesheet" href="./loader.css?v=1.1">
+    <link rel="stylesheet" href="./animations.css?v=1.2">
 
     <style>
         /* Essential Mobile Layout - Logic handled by main.js */
@@ -83,10 +87,6 @@
             color: var(--accent);
         }
     </style>
-  <script type="module" crossorigin src="/Shashiniphotogrphy/assets/main-DNfmjBcW.js"></script>
-  <link rel="modulepreload" crossorigin href="/Shashiniphotogrphy/assets/style-BqiAwLdI.js">
-  <link rel="stylesheet" crossorigin href="/Shashiniphotogrphy/assets/style-Dy_7Mlko.css">
-  <link rel="stylesheet" crossorigin href="/Shashiniphotogrphy/assets/main-CwHsPaJG.css">
 </head>
 
 <body>
@@ -94,7 +94,7 @@
     <!-- Navigation -->
     <header class="header">
         <div class="logo" onclick="setView('home')">
-            <img src="/Shashiniphotogrphy/assets/logo-txtdq3-Z.png" alt="Shashini Photography" class="logo-img">
+            <img src="./logo.png" alt="Shashini Photography" class="logo-img">
             <div class="logo-text">
                 <span class="brand-name">Shashini</span>
                 <span class="brand-sub">Photography</span>
@@ -141,7 +141,7 @@
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; width: 100%;">
             <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;"
                 onclick="setView('home'); document.getElementById('close-menu-btn').click();">
-                <img src="/Shashiniphotogrphy/assets/logo-txtdq3-Z.png" alt="Logo" style="height: 60px; width: auto;">
+                <img src="./logo.png" alt="Logo" style="height: 60px; width: auto;">
             </div>
             <button class="close-menu-btn" id="close-menu-btn"
                 style="position: static; margin: 0; padding: 10px;">✕</button>
@@ -229,7 +229,8 @@
             </div>
         </div>
     </footer>
-
+
+    <script type="module" src="./main.js?v=2.4"></script>
 
     <!-- Initializer -->
     <script>

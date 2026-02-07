@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shashini Photography | Admin Control Dashboard</title>
+    <title>Shashini Photography | Admin Control Dashboard</title>
+    <link rel="stylesheet" href="./style.css?v=2.1">
+    <link rel="stylesheet" href="./animations.css?v=1.1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/metropolis.min.css">
     <style>
         .tab-content {
@@ -79,18 +81,18 @@
             }
         }
     </style>
-  <script type="module" crossorigin src="/Shashiniphotogrphy/assets/admin-D7w11SQW.js"></script>
-  <link rel="modulepreload" crossorigin href="/Shashiniphotogrphy/assets/style-BqiAwLdI.js">
-  <link rel="stylesheet" crossorigin href="/Shashiniphotogrphy/assets/style-Dy_7Mlko.css">
 </head>
 
 <body class="admin-body">
     <header class="main-header">
-        <div class="header-container">
-            <img src="/Shashiniphotogrphy/assets/logo-txtdq3-Z.png" alt="Shashini Photography" class="logo-img">
-            <span style="font-family: 'Metropolis', sans-serif; font-weight: 700; letter-spacing: 2px;">SHASHINI
-                STUDIO</span>
+        <div class="logo">
+            <img src="./logo.png" alt="Shashini Photography" class="logo-img">
+            <div class="logo-text">
+                <span class="brand-name">Shashini</span>
+                <span class="brand-sub">Photography</span>
+            </div>
         </div>
+
         <nav class="nav-links">
             <a href="#" class="nav-tab active" data-tab="overview">OVERVIEW</a>
             <a href="#" class="nav-tab" data-tab="vaults">VAULTS</a>
@@ -98,19 +100,46 @@
             <a href="#" class="nav-tab" data-tab="cms">STUDIO CMS</a>
             <a href="#" class="nav-tab" data-tab="messages">MESSAGES</a>
         </nav>
+
         <div class="header-actions">
-            <button class="theme-toggle">
+            <button class="theme-toggle"
+                style="background:transparent; border:none; cursor:pointer; color:var(--text-primary);">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <div class="profile-btn">
+            <div class="profile-btn" style="display: flex; align-items: center; gap: 10px;">
                 <div class="profile-icon">A</div>
-                <span>ADMIN</span>
+                <span style="font-size: 11px; font-weight: 800; color: var(--text-primary);">ADMIN</span>
             </div>
-        </div>
+
+            <button class="hamburger-btn" id="hamburger-btn"
+                style="display: none; background: none; border: none; cursor: pointer; color: var(--text-primary);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
         </div>
     </header>
+
+    <!-- Mobile Menu for Admin -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="./logo.png" alt="Logo" style="height: 50px; width: auto;">
+            </div>
+            <button class="close-menu-btn" id="close-menu-btn"
+                style="background: none; border: none; font-size: 24px; color: var(--text-primary); cursor: pointer;">✕</button>
+        </div>
+        <a class="mobile-nav-link active" data-tab="overview">Overview</a>
+        <a class="mobile-nav-link" data-tab="vaults">Vault Management</a>
+        <a class="mobile-nav-link" data-tab="bookings">Bookings</a>
+        <a class="mobile-nav-link" data-tab="cms">Studio CMS</a>
+        <a class="mobile-nav-link" data-tab="messages">Messages</a>
+    </div>
 
     <main id="app" class="container" style="margin-top: 150px;">
         <!-- OVERVIEW -->
@@ -252,11 +281,29 @@
         <section id="cms" class="tab-content slide-up">
             <div class="section-header">
                 <div>
-                    <span class="section-subtitle">MANAGEMENT</span>
-                    <h2 class="section-title">Photography CMS</h2>
+                    <span class="section-subtitle">STUDIO CONTROL</span>
+                    <h2 class="section-title">Studio CMS & Graphics</h2>
+                    <p style="color: #666; font-size: 13px; margin-top: 5px;">Manage your gallery, hero banners, and key
+                        section images for the entire website.</p>
                 </div>
             </div>
-            <div class="card">
+            <div class="card" style="margin-bottom: 25px; padding: 20px;">
+                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                    <button class="cta-btn"
+                        onclick="document.getElementById('cms-gallery-section').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: #333;">GALLERY</button>
+                    <button class="cta-btn"
+                        onclick="document.getElementById('hero-manager').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: #333;">HERO
+                        BANNERS</button>
+                    <button class="cta-btn"
+                        onclick="document.getElementById('graphics-manager').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: var(--accent);">SECTION
+                        IMAGES</button>
+                </div>
+            </div>
+
+            <div class="card" id="cms-gallery-section">
                 <h3>Gallery Management</h3>
 
                 <!-- Upload Method Tabs -->
@@ -356,6 +403,67 @@
                             Videos</span>
                     </div>
                 </div>
+
+                <!-- Section Images Management -->
+                <div id="graphics-manager" class="card"
+                    style="margin-bottom: 40px; padding: 30px; border-radius: 20px; background: var(--white);">
+                    <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">Section Specific Images</h3>
+                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Change the primary images for major
+                            website sections.</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
+                        <!-- THE ARTIST -->
+                        <div class="card"
+                            style="margin-bottom:0; padding: 20px; background: #f9f9f9; border: 1px solid #eee;">
+                            <span
+                                style="font-size: 10px; font-weight: 800; color: var(--accent); letter-spacing: 1px; display: block; margin-bottom: 15px;">THE
+                                ARTIST SECTION</span>
+                            <div id="graphic-artist-preview"
+                                style="width: 100%; aspect-ratio: 4/3; background: #eee; border-radius: 12px; margin-bottom: 15px; overflow: hidden;">
+                                <img src="./gallery-1.png" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <button class="cta-btn" onclick="document.getElementById('file-artist').click()"
+                                style="width: 100%; font-size: 10px; padding: 12px;">CHANGE IMAGE</button>
+                            <input type="file" id="file-artist" style="display: none;" accept="image/*"
+                                onchange="uploadGraphic('artist', event)">
+                        </div>
+
+                        <!-- WHO WE ARE -->
+                        <div class="card"
+                            style="margin-bottom:0; padding: 20px; background: #f9f9f9; border: 1px solid #eee;">
+                            <span
+                                style="font-size: 10px; font-weight: 800; color: var(--accent); letter-spacing: 1px; display: block; margin-bottom: 15px;">WHO
+                                WE ARE SECTION</span>
+                            <div id="graphic-whoWeAre-preview"
+                                style="width: 100%; aspect-ratio: 4/3; background: #eee; border-radius: 12px; margin-bottom: 15px; overflow: hidden;">
+                                <img src="./gallery-1.png" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <button class="cta-btn" onclick="document.getElementById('file-whoWeAre').click()"
+                                style="width: 100%; font-size: 10px; padding: 12px;">CHANGE IMAGE</button>
+                            <input type="file" id="file-whoWeAre" style="display: none;" accept="image/*"
+                                onchange="uploadGraphic('whoWeAre', event)">
+                        </div>
+
+                        <!-- READY TO BEGIN? -->
+                        <div class="card"
+                            style="margin-bottom:0; padding: 20px; background: #f9f9f9; border: 1px solid #eee;">
+                            <span
+                                style="font-size: 10px; font-weight: 800; color: var(--accent); letter-spacing: 1px; display: block; margin-bottom: 15px;">READY
+                                TO BEGIN SECTION</span>
+                            <div id="graphic-readyToBegin-preview"
+                                style="width: 100%; aspect-ratio: 4/3; background: #eee; border-radius: 12px; margin-bottom: 15px; overflow: hidden;">
+                                <img src="./gallery-2.png" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <button class="cta-btn" onclick="document.getElementById('file-readyToBegin').click()"
+                                style="width: 100%; font-size: 10px; padding: 12px;">CHANGE IMAGE</button>
+                            <input type="file" id="file-readyToBegin" style="display: none;" accept="image/*"
+                                onchange="uploadGraphic('readyToBegin', event)">
+                        </div>
+                    </div>
+                </div>
+
 
                 <div class="section-header" style="margin-top: 20px;">
                     <div>
@@ -606,7 +714,8 @@
                 ✕</button>
         </div>
     </div>
-
+
+    <script type="module" src="./admin.js?v=1.2"></script>
 </body>
 
 </html>

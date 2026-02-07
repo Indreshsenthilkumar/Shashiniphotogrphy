@@ -58,13 +58,27 @@ class GoogleDriveService {
                     },
                     scopes: ['https://www.googleapis.com/auth/drive'],
                 });
+
+                // --- STARTUP SELF-TEST ---
+                // We try to get a token immediately to see if the key is valid
+                auth.getAccessToken()
+                    .then(() => console.log('✅ [GoogleDrive] Connection SELF-TEST: SUCCESS! Your key is valid.'))
+                    .catch(err => {
+                        console.error('❌ [GoogleDrive] Connection SELF-TEST: FAILED!');
+                        console.error('Reason:', err.message);
+                        if (err.message.includes('DECODER')) {
+                            console.error('TIPS: Your GOOGLE_PRIVATE_KEY is still formatted incorrectly in Railway.');
+                            console.error('Fix: Copy the key from render-env-vars.txt and make sure NO quotes are used.');
+                        }
+                    });
+
             } else {
                 console.warn('Google Drive credentials NOT FOUND in environment variables.');
                 return;
             }
 
             this.drive = google.drive({ version: 'v3', auth });
-            console.log('[GoogleDrive] Service initialized successful.');
+            console.log('[GoogleDrive] Service initialized.');
         } catch (error) {
             console.error('CRITICAL AUTH ERROR:', error.message);
         }

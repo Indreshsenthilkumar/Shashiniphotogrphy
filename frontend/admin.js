@@ -1,6 +1,6 @@
-const API_URL = 'http://127.0.0.1:5001/api';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwL3REAruQwojPkDr1AhCOzCGb18pTT7o1S0qX2nhv6rwEObuyYYJxzdiL6zivQAxG9/exec';
-const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzUKwfZT8ChKwOBNFnqI5QN_vlV1JJwdCCmVP181Yu9qbMn8s-pOttZIXMTRrgyO6-z/exec';
+const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5mtk_rdyaeXB5_YTIXO12NvqlXaSYNKiREsIMJ3FsDDMEmg2aiOc9ExlNYxH03u8k/exec';
+const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
 
 // --- SECURE SHIELD ---
 window.onerror = function (msg) { console.error('[Admin Shield]', msg); return true; };
@@ -80,6 +80,7 @@ async function init() {
     }
 
     setupTabSwitching();
+    setupGlobalListeners();
 
     // Force Card View on Mobile for better UX
     if (window.innerWidth < 768) {
@@ -109,6 +110,15 @@ function setupMobileMenu() {
     const close = document.getElementById('close-menu-btn');
     const menu = document.getElementById('mobile-menu');
     const links = document.querySelectorAll('.mobile-nav-link');
+    const themeToggle = document.getElementById('mobile-theme-toggle');
+
+    if (themeToggle) {
+        themeToggle.onclick = (e) => {
+            e.stopPropagation();
+            window.toggleTheme();
+            // Optional: Close menu after toggle? Maybe not.
+        };
+    }
 
     if (ham && menu) {
         ham.onclick = (e) => {
@@ -175,7 +185,7 @@ async function refreshData() {
         const [v, s, c, b, et, m] = await Promise.all([
             safeFetch(`${API_URL}/vaults?sync=true&t=${t}`, 'Vaults'),
             safeFetch(`${API_URL}/vaults/selections?t=${t}`, 'Selections'),
-            fetch(`${CMS_SHEET_URL}?action=getCMS`).then(r => r.json()).catch(err => {
+            fetch(`${CMS_SHEET_URL}?action=getCMS&t=${t}`).then(r => r.json()).catch(err => {
                 console.warn('[CMS] Sheet fetch failed, falling back to local:', err);
                 return safeFetch(`${API_URL}/cms?t=${t}`, 'CMS (Local Fallback)');
             }),
@@ -236,11 +246,18 @@ function setupGlobalListeners() {
     if (currentTheme === 'dark') document.body.classList.add('dark-mode');
 
     if (themeToggle) {
-        themeToggle.onclick = () => {
+        // Theme Toggle Logic
+        window.toggleTheme = () => {
             document.body.classList.toggle('dark-mode');
             const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
             localStorage.setItem('theme', theme);
+
+            // Update both buttons icon/state if needed, though CSS handles most
         };
+
+        if (themeToggle) {
+            themeToggle.onclick = window.toggleTheme;
+        }
     }
 
     // Vault Save
@@ -1336,6 +1353,40 @@ window.uploadGraphic = async (key, e) => {
 };
 
 
+
+window.saveHeroConfig = async () => {
+    const input = document.getElementById('hero-interval-input');
+    if (!input) return;
+
+    const val = parseInt(input.value);
+    if (!val || val < 1) return alert('Invalid interval');
+
+    // Show loading state on button
+    const btn = document.querySelector('.cta-btn[onclick="saveHeroConfig()"]');
+    const originalText = btn ? btn.innerText : 'SAVE CONFIG';
+    if (btn) btn.innerText = 'SAVING...';
+
+    try {
+        await fetch(CMS_SHEET_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'saveHeroConfig',
+                interval: val
+            })
+        });
+
+        // Update local state and toast
+        if (!state.cms.hero) state.cms.hero = {};
+        state.cms.hero.interval = val;
+        showToast('Interval saved to Cloud!', 'success');
+    } catch (err) {
+        console.error('Failed to save config:', err);
+        showToast('Failed to save config', 'error');
+    } finally {
+        if (btn) btn.innerText = originalText;
+    }
+};
+
 function renderHeroSettings() {
     const container = document.getElementById('hero-slides-container');
     const intervalInput = document.getElementById('hero-interval-input');
@@ -1366,40 +1417,6 @@ function renderHeroSettings() {
     }).join('');
 }
 
-window.saveHeroConfig = async () => {
-    const input = document.getElementById('hero-interval-input');
-    const interval = parseInt(input.value) || 5;
-
-    const btn = document.querySelector('[onclick="saveHeroConfig()"]');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = 'SAVING...';
-    }
-
-    try {
-        await fetch(CMS_SHEET_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'saveHeroConfig', interval })
-        });
-
-        // Optimistic Update: Update local state immediately
-        if (!state.cms.hero) state.cms.hero = { slides: [] };
-        state.cms.hero.interval = interval;
-
-        showToast('Hero interval updated to ' + interval + 's', 'success');
-
-        // Don't refreshData immediately as Google Sheets is slow to update. 
-        // Just re-render the settings with local state.
-        renderHeroSettings();
-    } catch (e) {
-        showToast('Failed to save config', 'error');
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = 'SAVE CONFIG';
-        }
-    }
-};
 
 window.previewHeroUpload = async (e) => {
     const files = e.target.files;

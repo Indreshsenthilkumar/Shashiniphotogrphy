@@ -1,6 +1,6 @@
-const API_URL = 'http://127.0.0.1:5001/api';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwL3REAruQwojPkDr1AhCOzCGb18pTT7o1S0qX2nhv6rwEObuyYYJxzdiL6zivQAxG9/exec';
-const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzUKwfZT8ChKwOBNFnqI5QN_vlV1JJwdCCmVP181Yu9qbMn8s-pOttZIXMTRrgyO6-z/exec';
+const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5mtk_rdyaeXB5_YTIXO12NvqlXaSYNKiREsIMJ3FsDDMEmg2aiOc9ExlNYxH03u8k/exec';
+const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
 
 const app = document.getElementById('app');
 const loginBtn = document.querySelector('.profile-btn');
@@ -165,22 +165,15 @@ async function init() {
     }
 
     if (loginBtn) {
-        // DETECT ENVIRONMENT: If strict '127.0.0.1' or 'localhost' is not in hostname, we are likely on Public Static site (GitHub Pages)
-        // The Backend (API) is only local, so Auth won't work on Public.
-        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
-
-        if (!isLocal) {
-            loginBtn.style.display = 'none'; // Hide login on public site
-        } else {
-            loginBtn.onclick = () => {
-                if (state.user) {
-                    state.view = 'profile';
-                    render();
-                } else {
-                    window.showLoginModal();
-                }
-            };
-        }
+        // Backend is now on Railway, so Auth works everywhere!
+        loginBtn.onclick = () => {
+            if (state.user) {
+                state.view = 'profile';
+                render();
+            } else {
+                window.showLoginModal();
+            }
+        };
     }
 
     // --- GLOBAL AUTH MODAL ---

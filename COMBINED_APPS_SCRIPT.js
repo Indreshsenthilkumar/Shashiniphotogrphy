@@ -94,7 +94,7 @@ function getCMS() {
         if (section === "Gallery") cms.items.push({ id: id, type: type, title: title, url: url });
         else if (section === "HeroSlide") cms.hero.slides.push({ id: id, type: type, title: title, url: url });
         else if (section === "Config" && title === "interval") cms.hero.interval = parseInt(url) || 5;
-        else if (section === "Graphic") cms.graphics[type] = url; // For graphics, we store key in 'type' column for simplicity or mapping
+        else if (section === "Graphic") cms.graphics[title] = url; // Use Title as Key
     });
     return responseJSON(cms);
 }
@@ -137,13 +137,13 @@ function saveCMSMedia(data) {
         var key = data.key || data.type; // frontend sends key
         var rows = sheet.getDataRange().getValues();
         for (var i = 1; i < rows.length; i++) {
-            if (rows[i][1] === "Graphic" && rows[i][2] === key) {
+            if (rows[i][1] === "Graphic" && rows[i][3] === key) { // Check Title column
                 sheet.getRange(i + 1, 5).setValue(finalUrl);
                 return responseJSON({ success: true, url: finalUrl });
             }
         }
-        // If not found, append
-        sheet.appendRow([new Date().getTime().toString(), "Graphic", key, "Graphic Image", finalUrl]);
+        // If not found, append (Section, Type, Title=Key, URL)
+        sheet.appendRow([new Date().getTime().toString(), "Graphic", "image", key, finalUrl]);
         return responseJSON({ success: true, url: finalUrl });
     }
 

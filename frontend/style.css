@@ -933,13 +933,12 @@ body.dark-mode .login-input {
         gap: 15px !important;
     }
 
-    /* ADMIN PAGE SPECIFIC: Turn Nav into Bottom Bar */
+    /* ADMIN PAGE SPECIFIC: Turn Nav into Bottom Bar - DISABLED per user request for hamburger menu
     .main-header .nav-links {
         position: fixed;
         bottom: 20px;
         left: 50%;
         transform: translateX(-50%) translateY(100px);
-        /* Start off-screen */
         width: 90%;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
@@ -956,6 +955,13 @@ body.dark-mode .login-input {
         gap: 0;
         overflow-x: auto;
         animation: mobileNavEntrance 1.2s cubic-bezier(0.19, 1, 0.22, 1) 0.5s forwards;
+    }
+    */
+    /* Hide nav links on mobile so hamburger is used */
+    @media (max-width: 768px) {
+        .main-header .nav-links {
+            display: none;
+        }
     }
 
     @keyframes mobileNavEntrance {
@@ -3994,4 +4000,58 @@ body.home-view:not(.scrolled) .brand-sub {
             font-size: 13px !important;
         }
     }
-}
+
+    /* --- MOBILE MENU --- */
+
+    .mobile-menu {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 100vh;
+        background: var(--bg-color);
+        z-index: 5000;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-menu.active {
+        transform: translateX(0);
+    }
+
+    .mobile-nav-link {
+        font-family: 'Metropolis', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: color 0.3s ease;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .mobile-nav-link:hover {
+        color: var(--accent);
+    }
+
+    .mobile-nav-link.active {
+        color: var(--accent);
+        font-weight: 800;
+    }
+
+    .mobile-menu .close-menu-btn {
+        align-self: flex-end;
+        margin-bottom: 20px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-primary);
+    }

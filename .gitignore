@@ -5,3 +5,4 @@ dist
 data/selections.json
 backend/credentials.json
 backend/fix-creds.js
+render-env-vars.txt

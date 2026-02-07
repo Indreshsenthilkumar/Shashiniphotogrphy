@@ -24,6 +24,9 @@ process.on('unhandledRejection', (reason, promise) => {
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Required for Railway/Render: Trust the first proxy (the cloud's load balancer)
+app.set('trust proxy', 1);
+
 // SECURITY: Set security-related HTTP headers
 app.use(helmet());
 

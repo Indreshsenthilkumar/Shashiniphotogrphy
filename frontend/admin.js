@@ -1,6 +1,6 @@
 const API_URL = 'http://127.0.0.1:5001/api';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwL3REAruQwojPkDr1AhCOzCGb18pTT7o1S0qX2nhv6rwEObuyYYJxzdiL6zivQAxG9/exec';
-const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxu6hp66vbNm1k6QAoy-or27HxtZ1nC8aD79rdUIaHsyGxXNkU7rSBYHKlS1vAErn8n/exec';
+const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzUKwfZT8ChKwOBNFnqI5QN_vlV1JJwdCCmVP181Yu9qbMn8s-pOttZIXMTRrgyO6-z/exec';
 
 // --- SECURE SHIELD ---
 window.onerror = function (msg) { console.error('[Admin Shield]', msg); return true; };

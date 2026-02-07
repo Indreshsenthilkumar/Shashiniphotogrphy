@@ -104,27 +104,43 @@ async function init() {
 }
 
 function setupMobileMenu() {
+    console.log('[Admin] Setting up mobile menu...');
     const ham = document.getElementById('hamburger-btn');
     const close = document.getElementById('close-menu-btn');
     const menu = document.getElementById('mobile-menu');
     const links = document.querySelectorAll('.mobile-nav-link');
 
     if (ham && menu) {
-        ham.onclick = () => menu.classList.add('active');
+        ham.onclick = (e) => {
+            e.stopPropagation();
+            console.log('[Admin] Hamburger clicked');
+            menu.classList.add('active');
+        };
+    } else {
+        console.warn('[Admin] Hamburger or menu element missing:', { ham, menu });
     }
+
     if (close && menu) {
         close.onclick = () => menu.classList.remove('active');
     }
 
-    links.forEach(link => {
-        link.onclick = (e) => {
-            e.preventDefault();
-            const tab = link.dataset.tab;
-            if (tab) {
-                window.switchTab(tab);
-                menu.classList.remove('active');
-            }
-        };
+    if (links && menu) {
+        links.forEach(link => {
+            link.onclick = (e) => {
+                const tab = e.currentTarget.dataset.tab;
+                if (tab) {
+                    switchTab(tab);
+                    menu.classList.remove('active');
+                }
+            };
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (menu && menu.classList.contains('active') && !menu.contains(e.target) && e.target !== ham) {
+            menu.classList.remove('active');
+        }
     });
 }
 
@@ -159,7 +175,7 @@ async function refreshData() {
         const [v, s, c, b, et, m] = await Promise.all([
             safeFetch(`${API_URL}/vaults?sync=true&t=${t}`, 'Vaults'),
             safeFetch(`${API_URL}/vaults/selections?t=${t}`, 'Selections'),
-            fetch(CMS_SHEET_URL).then(r => r.json()).catch(err => {
+            fetch(`${CMS_SHEET_URL}?action=getCMS`).then(r => r.json()).catch(err => {
                 console.warn('[CMS] Sheet fetch failed, falling back to local:', err);
                 return safeFetch(`${API_URL}/cms?t=${t}`, 'CMS (Local Fallback)');
             }),
@@ -1243,9 +1259,20 @@ function renderGraphicsSettings() {
     const whoImg = document.querySelector('#graphic-whoWeAre-preview img');
     const readyImg = document.querySelector('#graphic-readyToBegin-preview img');
 
-    if (artistImg && graphics.artist) artistImg.src = getImageUrl(graphics.artist);
-    if (whoImg && graphics.whoWeAre) whoImg.src = getImageUrl(graphics.whoWeAre);
-    if (readyImg && graphics.readyToBegin) readyImg.src = getImageUrl(graphics.readyToBegin);
+    if (artistImg && graphics.artist) {
+        artistImg.src = getImageUrl(graphics.artist);
+        artistImg.style.opacity = "1";
+    }
+    if (whoImg && graphics.whoWeAre) {
+        whoImg.src = getImageUrl(graphics.whoWeAre);
+        whoImg.style.opacity = "1";
+    }
+    if (readyImg && graphics.readyToBegin) {
+        readyImg.src = getImageUrl(graphics.readyToBegin);
+        readyImg.style.opacity = "1";
+    }
+
+    console.log('[Admin] Graphics settings rendered.');
 }
 
 window.uploadGraphic = async (key, e) => {

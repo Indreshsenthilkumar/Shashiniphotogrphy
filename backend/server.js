@@ -22,19 +22,21 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 8080; // Railway uses 8080 usually
 
-// Required for Railway/Render: Trust the first proxy (the cloud's load balancer)
+// 1. MUST BE FIRST: Trust the proxy
 app.set('trust proxy', 1);
+console.log('[Server] Start-up: Trust Proxy enabled.');
 
 // SECURITY: Set security-related HTTP headers
 app.use(helmet());
 
 // SECURITY: Basic Rate Limiting to prevent DDoS/Brute Force
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // Limit each IP to 1000 requests per windowMs
-    message: 'Too many requests from this IP, please try again after 15 minutes.'
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    message: 'Too many requests.',
+    validate: { trustProxy: false }, // Disables the check that's causing the crash
 });
 app.use('/api/', limiter);
 

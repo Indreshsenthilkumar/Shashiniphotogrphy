@@ -280,11 +280,29 @@
         <section id="cms" class="tab-content slide-up">
             <div class="section-header">
                 <div>
-                    <span class="section-subtitle">MANAGEMENT</span>
-                    <h2 class="section-title">Photography CMS</h2>
+                    <span class="section-subtitle">STUDIO CONTROL</span>
+                    <h2 class="section-title">Studio CMS & Graphics</h2>
+                    <p style="color: #666; font-size: 13px; margin-top: 5px;">Manage your gallery, hero banners, and key
+                        section images for the entire website.</p>
                 </div>
             </div>
-            <div class="card">
+            <div class="card" style="margin-bottom: 25px; padding: 20px;">
+                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                    <button class="cta-btn"
+                        onclick="document.getElementById('cms-gallery-section').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: #333;">GALLERY</button>
+                    <button class="cta-btn"
+                        onclick="document.getElementById('hero-manager').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: #333;">HERO
+                        BANNERS</button>
+                    <button class="cta-btn"
+                        onclick="document.getElementById('graphics-manager').scrollIntoView({behavior:'smooth'})"
+                        style="padding: 10px 20px; font-size: 11px; white-space: nowrap; background: var(--accent);">SECTION
+                        IMAGES</button>
+                </div>
+            </div>
+
+            <div class="card" id="cms-gallery-section">
                 <h3>Gallery Management</h3>
 
                 <!-- Upload Method Tabs -->

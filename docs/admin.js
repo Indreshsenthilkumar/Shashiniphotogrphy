@@ -1,4 +1,4 @@
-const API_URL = 'http://127.0.0.1:5001/api';
+const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwL3REAruQwojPkDr1AhCOzCGb18pTT7o1S0qX2nhv6rwEObuyYYJxzdiL6zivQAxG9/exec';
 const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzUKwfZT8ChKwOBNFnqI5QN_vlV1JJwdCCmVP181Yu9qbMn8s-pOttZIXMTRrgyO6-z/exec';
 

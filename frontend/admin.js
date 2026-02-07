@@ -1295,7 +1295,8 @@ window.uploadGraphic = async (key, e) => {
         }
 
         // 2. Sync to Google Sheets
-        await fetch(CMS_SHEET_URL, {
+        console.log(`[Admin] Uploading graphic '${key}' to Sheet...`);
+        const res = await fetch(CMS_SHEET_URL, {
             method: 'POST',
             body: JSON.stringify({
                 action: 'saveGraphic',
@@ -1303,17 +1304,32 @@ window.uploadGraphic = async (key, e) => {
                 url: base64
             })
         });
+        const result = await res.json();
+        console.log('[Admin] Sheet upload result:', result);
 
-        showToast(`✓ ${key.toUpperCase()} image updated!`, 'success');
+        if (result.success && result.url) {
+            // Update local state with the returned URL (Drive Link)
+            if (!state.cms.graphics) state.cms.graphics = {};
+            state.cms.graphics[key] = result.url;
+            showToast(`✓ ${key.toUpperCase()} updated!`, 'success');
+        } else {
+            // Fallback to base64 if cloud failed but didn't throw
+            console.warn('[Admin] Cloud sync weirdness, using local base64');
+            if (!state.cms.graphics) state.cms.graphics = {};
+            state.cms.graphics[key] = base64;
+            showToast(`Saved locally (Cloud: ${result.error || 'Unknown'})`, 'warning');
+        }
 
-        // Optimistic update
-        if (!state.cms.graphics) state.cms.graphics = {};
-        state.cms.graphics[key] = base64;
         renderGraphicsSettings();
 
     } catch (err) {
         console.error('Graphic Upload Error:', err);
         showToast('Upload failed: ' + err.message, 'error');
+        // Still try to show the image if we have base64
+        if (state.cms.graphics && !state.cms.graphics[key]) {
+            state.cms.graphics[key] = await fileToBase64(file);
+            renderGraphicsSettings();
+        }
     } finally {
         e.target.value = '';
     }

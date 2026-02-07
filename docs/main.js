@@ -146,6 +146,17 @@ async function init() {
     const closeMenuBtn = document.getElementById('close-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
 
+    // Auto-Sync background data every 60 seconds (Real-time update)
+    setInterval(async () => {
+        const hashView = window.location.hash.substring(1) || 'home';
+        await fetchGlobalData();
+        // Only refresh UI if we are on a page that heavily depends on CMS data
+        if (state.view === 'home' || state.view === 'gallery' || hashView === 'home') {
+            render();
+            if (state.view === 'home') initHeroCarousel();
+        }
+    }, 60000);
+
     if (hamburgerBtn && mobileMenu) {
         hamburgerBtn.onclick = () => mobileMenu.classList.add('active');
     }

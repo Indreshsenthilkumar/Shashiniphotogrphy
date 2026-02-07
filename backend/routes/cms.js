@@ -8,25 +8,26 @@ const CMS_PATH = path.join(__dirname, '../data/cms.json');
 
 const readJSON = () => {
     try {
-        if (!fs.existsSync(CMS_PATH)) return { items: [], hero: { slides: [], interval: 5 } };
+        if (!fs.existsSync(CMS_PATH)) return { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
         let content = fs.readFileSync(CMS_PATH, 'utf8');
         if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
-        if (!content.trim()) return { items: [], hero: { slides: [], interval: 5 } };
+        if (!content.trim()) return { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
         const data = JSON.parse(content);
 
         // AUTO-MIGRATION: If legacy array, wrap it
         if (Array.isArray(data)) {
-            return { items: data, hero: { slides: [], interval: 5 } };
+            return { items: data, hero: { slides: [], interval: 5 }, graphics: {} };
         }
 
         // Ensure defaults
         if (!data.items) data.items = [];
         if (!data.hero) data.hero = { slides: [], interval: 5 };
+        if (!data.graphics) data.graphics = {};
 
         return data;
     } catch (e) {
         console.error(`[CMS] Error reading:`, e.message);
-        return { items: [], hero: { slides: [], interval: 5 } };
+        return { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
     }
 };
 
@@ -105,4 +106,16 @@ router.post('/hero/config', async (req, res) => {
     res.json(cms.hero);
 });
 
+// SECTION GRAPHICS (THE ARTIST, WHO WE ARE, READY TO BEGIN)
+router.post('/graphics', async (req, res) => {
+    const { key, url } = req.body;
+    if (!key || !url) return res.status(400).json({ error: 'Missing key or url' });
+
+    const cms = readJSON();
+    cms.graphics[key] = url;
+    await writeJSON(cms);
+    res.json({ success: true, graphics: cms.graphics });
+});
+
 module.exports = router;
+

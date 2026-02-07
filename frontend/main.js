@@ -17,7 +17,7 @@ function getImageUrl(url) {
 window.onerror = function (msg) { console.error('[App Shield]', msg); return true; };
 window.onunhandledrejection = function (e) { console.error('[App Shield] Rejection', e.reason); };
 
-async function secureFetch(url, opts = {}, timeout = 10000) {
+async function secureFetch(url, opts = {}, timeout = 20000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
@@ -40,7 +40,7 @@ let state = {
     currentVault: null,
     photos: [],
     selectedPhotos: new Set(),
-    cms: { items: [], hero: { slides: [], interval: 5 } },
+    cms: { items: [], hero: { slides: [], interval: 5 }, graphics: {} },
     messages: []
 };
 
@@ -73,8 +73,8 @@ async function init() {
 
     // Set initial home-view class for header styling
     if (state.view === 'home') document.body.classList.add('home-view');
-    window.setView = (view) => {
-        if (state.view === view) return;
+    window.setView = (view, photoIndex = null, pushState = true) => {
+        if (state.view === view && photoIndex === null) return;
         state.view = view;
 
         // Force Card View on Mobile (Tables are too messy)
@@ -89,6 +89,10 @@ async function init() {
         document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === view));
         document.querySelectorAll('.mobile-nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === view));
 
+        if (pushState) {
+            history.pushState({ view }, "", `#${view}`);
+        }
+
         render();
 
         // Background data sync
@@ -96,6 +100,30 @@ async function init() {
             if (view === 'home' || view === 'gallery') render();
         });
     };
+    // --- BROWSER NAVIGATION HANDLING ---
+    const handleHashSync = () => {
+        const hashView = window.location.hash.substring(1);
+        const validViews = ['home', 'gallery', 'bookings', 'vault', 'messages', 'profile'];
+        if (hashView && validViews.includes(hashView)) {
+            window.setView(hashView, null, false);
+        }
+    };
+
+    window.onpopstate = (e) => {
+        if (e.state && e.state.view) {
+            window.setView(e.state.view, null, false);
+        } else {
+            handleHashSync() || window.setView('home', null, false);
+        }
+    };
+
+    // Set initial history state if not set
+    if (!history.state) {
+        history.replaceState({ view: state.view }, "", `#${state.view}`);
+    } else {
+        handleHashSync();
+    }
+
     setupTheme();
     setupNavigation();
 
@@ -107,8 +135,11 @@ async function init() {
     await Promise.race([dataPromise, timeoutPromise]);
     window.hideLoader();
 
-    // Ensure UI updates if data arrives after timeout
-    dataPromise.finally(() => render());
+    // Only force render if we are still on the same view we started with to prevent nav flickering
+    const initialView = state.view;
+    dataPromise.finally(() => {
+        if (state.view === initialView) render();
+    });
 
     // Mobile Menu Toggle
     const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -250,22 +281,38 @@ async function init() {
 
 async function fetchGlobalData() {
     try {
-        // Fetch CMS data from Google Sheet Apps Script
-        const data = await fetch(CMS_SHEET_URL).then(r => r.json());
-        if (data && data.items) {
-            state.cms = data;
-        } else {
-            state.cms = { items: [], hero: { slides: [], interval: 5 } };
+        // 1. Fetch local CMS data first (Source of Truth for latest local uploads)
+        const localData = await secureFetch(`${API_URL}/cms`);
+        if (localData) {
+            state.cms = {
+                items: localData.items || [],
+                hero: localData.hero || { slides: [], interval: 5 },
+                graphics: localData.graphics || {}
+            };
+            console.log('[CMS Sync] Local cache loaded.');
+        }
+
+        // 2. Fetch CMS data from Google Sheet Apps Script for global items
+        const sheetData = await fetch(CMS_SHEET_URL).then(r => r.json()).catch(() => null);
+
+        if (sheetData) {
+            // MERGE: Prefer sheet for gallery/hero slides, but keep local graphics if they were recently updated
+            state.cms.items = (sheetData.items && sheetData.items.length > 0) ? sheetData.items : state.cms.items;
+            state.cms.hero = sheetData.hero || state.cms.hero;
+
+            // Graphics merging: Only use sheet graphics if local doesn't have them
+            if (sheetData.graphics) {
+                Object.keys(sheetData.graphics).forEach(key => {
+                    if (!state.cms.graphics[key]) {
+                        state.cms.graphics[key] = sheetData.graphics[key];
+                    }
+                });
+            }
+            console.log('[CMS Sync] Sheet data merged.');
+            return;
         }
     } catch (err) {
-        console.error('[CMS Sync] Failed to fetch from Google Sheet:', err);
-
-        // Fallback to local API only if we are running locally
-        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
-        if (isLocal) {
-            const localData = await secureFetch(`${API_URL}/cms`);
-            if (localData) state.cms = localData;
-        }
+        console.error('[CMS Sync] Sync process had issues:', err);
     }
 }
 
@@ -366,7 +413,8 @@ function render() {
             const p = document.getElementById('admin-pass').value;
 
             if (u === 'admin123' && p === '098765') {
-                window.location.href = '/admin.html';
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                window.location.href = './admin.html';
             } else {
                 alert('Invalid Credentials');
             }
@@ -494,7 +542,7 @@ function renderHome() {
             <div class="premium-grid-card" style="background: var(--card-bg); border-radius: 40px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; box-shadow: var(--shadow-lg); transition: all 0.5s ease;">
                 <!-- Left: Image -->
                 <div style="position: relative; min-height: 500px; overflow: hidden;">
-                     <img src="./gallery-1.png" alt="The Artist" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                     <img src="${state.cms.graphics?.artist ? getImageUrl(state.cms.graphics.artist) : './gallery-1.png'}" alt="The Artist" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
                 </div>
 
                 <!-- Right: Content -->
@@ -534,7 +582,7 @@ function renderHome() {
             
             <div class="specialty-carousel-wrapper">
                 <button class="carousel-btn prev" onclick="document.querySelector('.specialty-track').scrollBy({left: -350, behavior: 'smooth'})">←</button>
-                <div class="specialty-track">
+                <div class="specialty-track stagger-mobile">
                      <!-- 1. Weddings -->
                     <div class="specialty-card fade-in-up">
                         <div class="specialty-icon">💍</div>
@@ -668,7 +716,7 @@ function renderHome() {
              <div class="premium-grid-card" style="background: var(--card-bg); border-radius: 40px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; box-shadow: var(--shadow-lg); transition: all 0.5s ease;">
                 <!-- Left: Image (Full Grid Cell) -->
                 <div style="position: relative; min-height: 400px; overflow: hidden;">
-                    <img src="./gallery-1.png" alt="Our Story" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                    <img src="${state.cms.graphics?.whoWeAre ? getImageUrl(state.cms.graphics.whoWeAre) : './gallery-1.png'}" alt="Our Story" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
                 </div>
 
                 <!-- Right: Content -->
@@ -696,7 +744,7 @@ function renderHome() {
                 </div>
                 <!-- Right: Image (Converted to img tag for zoom effect) -->
                 <div style="position: relative; min-height: 400px; overflow: hidden;">
-                     <img src="./gallery-2.png" alt="Enquiry" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                     <img src="${state.cms.graphics?.readyToBegin ? getImageUrl(state.cms.graphics.readyToBegin) : './gallery-2.png'}" alt="Enquiry" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
                 </div>
             </div>
         </section>
@@ -753,12 +801,8 @@ function renderGalleryPreview() {
 
         return `
                     <div class="exhibition-item ${layoutClass} fade-in-up" 
-                         style="animation-delay: ${0.2 + (0.1 * idx)}s; cursor: pointer;" onclick="setView('gallery')">
+                         style="animation-delay: ${0.2 + (0.1 * idx)}s; cursor: pointer;" onclick="window.openGalleryLightbox(${idx})">
                          ${mediaHtml}
-                        <div class="exhibition-overlay">
-                            <span class="exhibition-tag">MASTERPIECE ${idx + 1}</span>
-                            <h4 class="exhibition-title">${item.title || 'Untitled Work'}</h4>
-                        </div>
                     </div>
                 `;
     }).join('')}
@@ -781,12 +825,12 @@ function renderGallery() {
                     <h2 class="section-title">Visual Narratives</h2>
                 </div>
             </div>
-            <div class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;">
+            <div class="photo-grid stagger-mobile" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;">
                 ${state.cms.items.length === 0 ? `
                     <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #999;">
                         <p>No gallery items found.</p>
                     </div>
-                ` : state.cms.items.map(item => {
+                ` : state.cms.items.map((item, idx) => {
         const isVideo = (item.url && (item.url.startsWith('data:video/') || item.url.endsWith('.mp4')));
         const isYouTube = (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be')));
 
@@ -804,7 +848,7 @@ function renderGallery() {
         }
 
         return `
-                    <div class="photo-item" style="border-radius: 20px; overflow: hidden; position: relative; aspect-ratio: 1;">
+                    <div class="photo-item" style="border-radius: 20px; overflow: hidden; position: relative; aspect-ratio: 1; cursor: pointer;" onclick="window.openGalleryLightbox(${idx})">
                         ${mediaHtml}
                     </div>
                 `}).join('')}
@@ -1162,6 +1206,110 @@ window.togglePhoto = (id) => {
     renderVaultPhotos();
 };
 
+// --- GALLERY LIGHTBOX (CMS items) ---
+window.openGalleryLightbox = (index) => {
+    const items = state.cms.items;
+    if (!items || !items[index]) return;
+
+    const item = items[index];
+    const isVideo = (item.url && (item.url.startsWith('data:video/') || item.url.endsWith('.mp4')));
+    const isYouTube = (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be')));
+
+    const lightbox = document.createElement('div');
+    lightbox.id = 'gallery-lightbox';
+    lightbox.className = 'lightbox-overlay';
+
+    let mediaHtml = '';
+    if (isYouTube) {
+        const videoId = item.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)?.[1];
+        mediaHtml = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" style="width: 100%; aspect-ratio: 16/9; border: none; border-radius: 15px;" allow="autoplay" allowfullscreen></iframe>`;
+    } else if (isVideo) {
+        mediaHtml = `<video src="${getImageUrl(item.url)}" style="max-height: 80vh; max-width: 90vw; border-radius: 15px;" controls autoplay></video>`;
+    } else {
+        mediaHtml = `<img src="${getImageUrl(item.url)}" alt="${item.title}" style="max-height: 80vh; max-width: 90vw; object-fit: contain; border-radius: 15px;">`;
+    }
+
+    lightbox.innerHTML = `
+        <div class="lightbox-container">
+            <button class="lightbox-close" onclick="window.closeGalleryLightbox()">✕</button>
+            <button class="lightbox-nav lightbox-prev" onclick="window.navigateGalleryLightbox(-1)">‹</button>
+            <button class="lightbox-nav lightbox-next" onclick="window.navigateGalleryLightbox(1)">›</button>
+            
+            <div class="lightbox-content" style="width: 95%; max-width: 1200px; display: flex; flex-direction: column; align-items: center;">
+                <div class="media-wrapper" style="width: 100%; display: flex; justify-content: center; align-items: center;">
+                    ${mediaHtml}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(lightbox);
+    document.body.style.overflow = 'hidden';
+    window.currentGalleryIndex = index;
+
+    // --- Keyboard Navigation ---
+    window.galleryKeyHandler = (e) => {
+        if (e.key === 'ArrowLeft') window.navigateGalleryLightbox(-1);
+        if (e.key === 'ArrowRight') window.navigateGalleryLightbox(1);
+        if (e.key === 'Escape') window.closeGalleryLightbox();
+    };
+    document.addEventListener('keydown', window.galleryKeyHandler);
+
+    // --- Touch Swipe (Good UX for Mobile) ---
+    let touchStartX = 0;
+    let touchEndX = 0;
+    lightbox.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    lightbox.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        if (touchEndX < touchStartX - 50) window.navigateGalleryLightbox(1);
+        if (touchEndX > touchStartX + 50) window.navigateGalleryLightbox(-1);
+    }, { passive: true });
+};
+
+window.navigateGalleryLightbox = (direction) => {
+    const items = state.cms.items;
+    window.currentGalleryIndex += direction;
+    if (window.currentGalleryIndex < 0) window.currentGalleryIndex = items.length - 1;
+    if (window.currentGalleryIndex >= items.length) window.currentGalleryIndex = 0;
+
+    // Update content instead of re-creating lightbox for smoothness
+    const lb = document.getElementById('gallery-lightbox');
+    if (!lb) return;
+
+    const item = items[window.currentGalleryIndex];
+    const isVideo = (item.url && (item.url.startsWith('data:video/') || item.url.endsWith('.mp4')));
+    const isYouTube = (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be')));
+    const content = lb.querySelector('.lightbox-content');
+
+    let mediaHtml = '';
+    if (isYouTube) {
+        const videoId = item.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)?.[1];
+        mediaHtml = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" style="width: 100%; aspect-ratio: 16/9; border: none; border-radius: 15px;" allow="autoplay" allowfullscreen></iframe>`;
+    } else if (isVideo) {
+        mediaHtml = `<video src="${getImageUrl(item.url)}" style="max-height: 80vh; max-width: 90vw; border-radius: 15px;" controls autoplay></video>`;
+    } else {
+        mediaHtml = `<img src="${getImageUrl(item.url)}" alt="${item.title}" style="max-height: 80vh; max-width: 90vw; object-fit: contain; border-radius: 15px;">`;
+    }
+
+    content.innerHTML = `
+        <div class="media-wrapper" style="width: 100%; display: flex; justify-content: center; align-items: center;">
+            ${mediaHtml}
+        </div>
+    `;
+};
+
+window.closeGalleryLightbox = () => {
+    const lb = document.getElementById('gallery-lightbox');
+    if (lb) {
+        lb.style.opacity = '0';
+        setTimeout(() => {
+            lb.remove();
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', window.galleryKeyHandler);
+        }, 300);
+    }
+};
+
 // Save selection temporarily (does not lock vault)
 async function saveSelection() {
     if (state.selectedPhotos.size === 0) {
@@ -1416,20 +1564,20 @@ async function renderMessagesView() {
 
 function renderEnquiryFormCard() {
     return `
-        <div class="card" style="width: 100%; padding: 50px; border-radius: 40px; box-shadow: 0 40px 100px rgba(0,0,0,0.05);">
+        <div class="card enquiry-card-premium" style="width: 100%; padding: 50px; border-radius: 40px; box-shadow: 0 40px 100px rgba(0,0,0,0.05);">
             <div style="text-align: center; margin-bottom: 35px;">
                 <h3 style="font-family: 'Playfair Display', serif; font-size: 28px; margin-bottom: 15px;">Start Your Journey</h3>
                 <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                    Every great photo starts with a conversation. Whether you have a specific vision in mind or just want to chat about possibilities, we're here to listen. Fill out the details below and we'll get back to you within 24 hours.
+                    Every great photo starts with a conversation. Whether you have a specific vision in mind or just want to chat about possibilities, we're here to listen.
                 </p>
             </div>
             
-            <div style="display: grid; gap: 20px;">
+            <div class="enquiry-grid-responsive" style="display: grid; gap: 20px;">
                 <div class="input-group">
                     <label class="input-label-premium" style="margin-bottom: 8px;">FULL NAME</label>
                     <input type="text" id="msg-name" class="login-input" value="${state.user?.name || ''}" style="padding: 18px; border-radius: 15px;" placeholder="e.g. John Doe">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="input-row-multi">
                     <div class="input-group">
                         <label class="input-label-premium" style="margin-bottom: 8px;">MOBILE NUMBER</label>
                         <input type="tel" id="msg-mobile" class="login-input" value="${state.user?.mobile || ''}" maxlength="10" oninput="this.value = this.value.replace(/\\D/g, '').slice(0, 10)" style="padding: 18px; border-radius: 15px;" placeholder="9876543210">

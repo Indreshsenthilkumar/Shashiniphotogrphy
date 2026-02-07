@@ -30,7 +30,18 @@ router.get('/', async (req, res) => {
         try {
             const { fetchMessagesFromSheet } = require('../services/googleSheets');
             console.log('[Messages] Initiating sheet sync...');
-            const sheetMessages = await fetchMessagesFromSheet();
+
+            const fetchWithTimeout = (ms) => Promise.race([
+                fetchMessagesFromSheet(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Sheet fetch timed out')), ms))
+            ]);
+
+            let sheetMessages = [];
+            try {
+                sheetMessages = await fetchWithTimeout(18000);
+            } catch (err) {
+                console.warn('[Messages] Sync timed out (18s), using local cache.');
+            }
 
             if (Array.isArray(sheetMessages)) {
                 const localMessages = readJSON(MESSAGES_PATH) || [];

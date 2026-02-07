@@ -50,9 +50,10 @@ router.get('/', async (req, res) => {
 
             let sheetVaults = null;
             try {
-                sheetVaults = await fetchWithTimeout(15000);
+                // Increased timeout to 18s (Frontend waits 20s)
+                sheetVaults = await fetchWithTimeout(18000);
             } catch (err) {
-                console.warn('[Vaults] Google Sheet sync timed out (15s). Using local cache.');
+                console.warn('[Vaults] Google Sheet sync timed out (18s). Using local cache.');
             }
 
             if (Array.isArray(sheetVaults)) {
@@ -279,11 +280,10 @@ router.get('/:vaultId/photos', async (req, res) => {
         // Transform photo objects to use our local proxy to ensure they always work
         const photos = rawPhotos.map(p => ({
             ...p,
-            // Preserve direct Google link as backup
-            googleUrl: p.url,
-            // Construct the local proxy URL relative to API_URL
+            googleUrl: p.url, // Original direct GDrive link
+            // Use local proxy but append filename for better browser handling
             url: `/vaults/photo/${p.id}`,
-            thumbnail: `/vaults/photo/${p.id}`,
+            thumbnail: p.thumbnail // keep the smaller one if available
         }));
 
         res.json({
@@ -302,8 +302,15 @@ router.get('/photo/:fileId', async (req, res) => {
     try {
         const stream = await googleDrive.getFileStream(fileId);
 
-        // Basic caching and content type (Drive API returns these in headers usually)
-        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        // Basic caching and content type
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+        res.setHeader('Content-Type', 'image/jpeg'); // Generic but works for most Drive previews
+
+        stream.on('error', (err) => {
+            console.error('[Proxy Stream Error]', err.message);
+            if (!res.headersSent) res.status(500).end();
+        });
+
         stream.pipe(res);
     } catch (error) {
         console.error(`[Proxy] Error serving file ${fileId}:`, error.message);

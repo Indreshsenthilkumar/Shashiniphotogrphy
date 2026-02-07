@@ -56,7 +56,7 @@ let state = {
     selections: [],
     bookings: [],
     eventTypes: [],
-    cms: [],
+    cms: { items: [], hero: { slides: [], interval: 5 }, graphics: {} },
     messages: [],
     vaultSearch: '',
     vaultFilter: 'all',
@@ -73,10 +73,22 @@ let state = {
 // --- CORE DASHBOARD LOGIC ---
 
 async function init() {
+    // ENFORCE MANDATORY LOGIN
+    if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+        window.location.href = './index.html';
+        return;
+    }
+
     setupTabSwitching();
+
+    // Force Card View on Mobile for better UX
+    if (window.innerWidth < 768) {
+        state.viewMode = 'cards';
+    }
+
     await refreshData();
     renderAll();
-    setupGlobalListeners();
+    setupMobileMenu();
 
     // Auto-refresh data every 30 seconds for "real-time" sync
     setInterval(async () => {
@@ -84,13 +96,43 @@ async function init() {
         await refreshData();
         renderAll();
     }, 30000);
+
+    // Header scroll listener
+    window.addEventListener('scroll', () => {
+        document.body.classList.toggle('scrolled', window.scrollY > 50);
+    });
+}
+
+function setupMobileMenu() {
+    const ham = document.getElementById('hamburger-btn');
+    const close = document.getElementById('close-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    const links = document.querySelectorAll('.mobile-nav-link');
+
+    if (ham && menu) {
+        ham.onclick = () => menu.classList.add('active');
+    }
+    if (close && menu) {
+        close.onclick = () => menu.classList.remove('active');
+    }
+
+    links.forEach(link => {
+        link.onclick = (e) => {
+            e.preventDefault();
+            const tab = link.dataset.tab;
+            if (tab) {
+                window.switchTab(tab);
+                menu.classList.remove('active');
+            }
+        };
+    });
 }
 
 async function refreshData() {
     // Helper to fetch with better error context
     const safeFetch = async (url, name) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s for Google Scripts
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // Increased to 20s for Google Scripts
 
         try {
             const res = await fetch(url, { signal: controller.signal });
@@ -131,12 +173,17 @@ async function refreshData() {
 
         // Handle Object-based CMS
         if (c && c.items && c.hero) {
-            state.cms = c;
+            state.cms = {
+                items: c.items || [],
+                hero: c.hero || { slides: [], interval: 5 },
+                graphics: c.graphics || {}
+            };
         } else {
             // Fallback: merge if partial data
             state.cms = {
                 items: (c && c.items) ? c.items : (Array.isArray(c) ? c : (state.cms?.items || [])),
-                hero: (c && c.hero) ? c.hero : (state.cms?.hero || { slides: [], interval: 5 })
+                hero: (c && c.hero) ? c.hero : (state.cms?.hero || { slides: [], interval: 5 }),
+                graphics: (c && c.graphics) ? c.graphics : (state.cms?.graphics || {})
             };
         }
 
@@ -894,7 +941,7 @@ window.viewSelection = async (vaultId, mobile) => {
                         <div class="card-badge">#${idx + 1}</div>
                         
                         <div class="premium-card-image-wrapper" onclick="openAdminLightbox(${idx}, window.adminLightboxPhotos)">
-                            <img src="${getImageUrl(photo.url)}" loading="lazy">
+                            <img src="${photo.googleUrl || getImageUrl(photo.url)}" loading="lazy">
                             <div class="premium-card-overlay">
                                 ${inDelivery ? `
                                     <div class="selection-indicator">
@@ -1069,7 +1116,7 @@ window.openAdminLightbox = (index, photosData) => {
             <button class="lightbox-nav lightbox-prev" onclick="navigateAdminLightbox(-1)">‹</button>
             <button class="lightbox-nav lightbox-next" onclick="navigateAdminLightbox(1)">›</button>
             <div class="lightbox-content">
-                <img id="admin-lightbox-image" src="${getImageUrl(photos[index].url)}">
+                <img id="admin-lightbox-image" src="${photos[index].googleUrl || getImageUrl(photos[index].url)}">
                 <div class="lightbox-info">
                     <span class="lightbox-counter">${index + 1} / ${photos.length}</span>
                 </div>
@@ -1141,6 +1188,7 @@ window.editEventType = () => { alert('Event types must be edited in Cal.com'); }
 
 function renderCMS() {
     renderHeroSettings();
+    renderGraphicsSettings();
 
     const gallery = document.getElementById('cms-gallery');
     if (!gallery) return;
@@ -1188,6 +1236,58 @@ function renderCMS() {
         `;
     }).join('');
 }
+
+function renderGraphicsSettings() {
+    const graphics = state.cms.graphics || {};
+    const artistImg = document.querySelector('#graphic-artist-preview img');
+    const whoImg = document.querySelector('#graphic-whoWeAre-preview img');
+    const readyImg = document.querySelector('#graphic-readyToBegin-preview img');
+
+    if (artistImg && graphics.artist) artistImg.src = getImageUrl(graphics.artist);
+    if (whoImg && graphics.whoWeAre) whoImg.src = getImageUrl(graphics.whoWeAre);
+    if (readyImg && graphics.readyToBegin) readyImg.src = getImageUrl(graphics.readyToBegin);
+}
+
+window.uploadGraphic = async (key, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    showToast(`Uploading ${key} image...`, 'info');
+    try {
+        const base64 = await fileToBase64(file);
+
+        // 1. Sync to local backend first (for reliability)
+        await fetch(`${API_URL}/cms/graphics`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, url: base64 })
+        });
+
+        // 2. Sync to Google Sheets
+        await fetch(CMS_SHEET_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'saveGraphic',
+                key: key,
+                url: base64
+            })
+        });
+
+        showToast(`✓ ${key.toUpperCase()} image updated!`, 'success');
+
+        // Optimistic update
+        if (!state.cms.graphics) state.cms.graphics = {};
+        state.cms.graphics[key] = base64;
+        renderGraphicsSettings();
+
+    } catch (err) {
+        console.error('Graphic Upload Error:', err);
+        showToast('Upload failed: ' + err.message, 'error');
+    } finally {
+        e.target.value = '';
+    }
+};
+
 
 function renderHeroSettings() {
     const container = document.getElementById('hero-slides-container');
@@ -1595,11 +1695,11 @@ window.previewCMS = (id) => {
         youtube.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" style="width:100%; height:100%; border:none; border-radius:15px;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     } else if (isVideo) {
         video.style.display = 'block';
-        video.src = getImageUrl(item.url);
+        video.src = item.googleUrl || getImageUrl(item.url);
         video.play();
     } else {
         img.style.display = 'block';
-        img.src = getImageUrl(item.url);
+        img.src = item.googleUrl || getImageUrl(item.url);
     }
 
     lightbox.style.display = 'flex';

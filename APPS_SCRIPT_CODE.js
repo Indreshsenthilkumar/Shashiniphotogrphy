@@ -35,6 +35,8 @@ function doGet(e) {
             return getBookings();
         } else if (action === 'getVaults') {
             return getVaults();
+        } else if (action === 'getCMS') {
+            return getCMS();
         } else {
             // Default to getMessages for backward compatibility or explicit action
             return getMessages();
@@ -69,6 +71,18 @@ function doPost(e) {
             return deleteVault(data);
         } else if (action === 'updateMessage') {
             return updateMessage(data);
+        } else if (action === 'saveGallery') {
+            return saveCMS('items', data.item);
+        } else if (action === 'deleteGallery') {
+            return deleteCMS('items', data.id);
+        } else if (action === 'saveHeroSlide') {
+            return saveCMS('heroSlides', data.slide);
+        } else if (action === 'deleteHeroSlide') {
+            return deleteCMS('heroSlides', data.id);
+        } else if (action === 'saveHeroConfig') {
+            return saveCMS('heroConfig', data.config);
+        } else if (action === 'saveGraphic') {
+            return saveCMS('graphics', { key: data.key, url: data.url });
         } else {
             return addMessage(data); // Default to addMessage
         }
@@ -310,6 +324,87 @@ function updateMessage(data) {
 }
 
 // --- HELPER ---
+
+// --- CMS FUNCTIONS ---
+
+function getCMS() {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('cms');
+    if (!sheet) return responseJSON({ items: [], hero: { slides: [], interval: 5 }, graphics: {} });
+
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows.shift();
+
+    const cms = { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
+
+    rows.forEach(row => {
+        const type = row[0]; // 'gallery', 'heroSlide', 'heroConfig', 'graphic'
+        const data = row[1] ? JSON.parse(row[1]) : null;
+        if (!data) return;
+
+        if (type === 'gallery') cms.items.push(data);
+        else if (type === 'heroSlide') cms.hero.slides.push(data);
+        else if (type === 'heroConfig') cms.hero = { ...cms.hero, ...data };
+        else if (type === 'graphic') {
+            cms.graphics[data.key] = data.url;
+        }
+    });
+
+    return responseJSON(cms);
+}
+
+function saveCMS(type, data) {
+    let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('cms');
+    if (!sheet) {
+        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet('cms');
+        sheet.appendRow(['Type', 'Data']);
+    }
+
+    const rows = sheet.getDataRange().getValues();
+
+    if (type === 'graphics') {
+        // Update existing key or add new
+        for (let i = 1; i < rows.length; i++) {
+            const rowType = rows[i][0];
+            const rowData = rows[i][1] ? JSON.parse(rows[i][1]) : null;
+            if (rowType === 'graphic' && rowData && rowData.key === data.key) {
+                sheet.getRange(i + 1, 2).setValue(JSON.stringify(data));
+                return responseJSON({ result: 'success' });
+            }
+        }
+        sheet.appendRow(['graphic', JSON.stringify(data)]);
+    } else if (type === 'heroConfig') {
+        for (let i = 1; i < rows.length; i++) {
+            if (rows[i][0] === 'heroConfig') {
+                sheet.getRange(i + 1, 2).setValue(JSON.stringify(data));
+                return responseJSON({ result: 'success' });
+            }
+        }
+        sheet.appendRow(['heroConfig', JSON.stringify(data)]);
+    } else {
+        // Gallery or Hero Slides
+        const rowType = type === 'items' ? 'gallery' : 'heroSlide';
+        sheet.appendRow([rowType, JSON.stringify(data)]);
+    }
+
+    return responseJSON({ result: 'success' });
+}
+
+function deleteCMS(type, id) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('cms');
+    if (!sheet) return responseJSON({ result: 'error' });
+
+    const rows = sheet.getDataRange().getValues();
+    const rowType = type === 'items' ? 'gallery' : 'heroSlide';
+
+    for (let i = 1; i < rows.length; i++) {
+        const data = rows[i][1] ? JSON.parse(rows[i][1]) : null;
+        if (rows[i][0] === rowType && data && String(data.id) === String(id)) {
+            sheet.deleteRow(i + 1);
+            return responseJSON({ result: 'success' });
+        }
+    }
+    return responseJSON({ result: 'error' });
+}
 
 function responseJSON(data) {
     return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);

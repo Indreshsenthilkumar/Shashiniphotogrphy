@@ -116,6 +116,12 @@ p {
     gap: 20px;
 }
 
+@media (max-width: 768px) {
+    .section-header div {
+        animation: mobileSlideIn 0.8s ease-out forwards;
+    }
+}
+
 .section-title {
     font-size: clamp(26px, 4vw, 34px);
     /* Slightly smaller & neener */
@@ -235,12 +241,35 @@ p {
 
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
         box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-        border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 5%;
+}
+
+/* SHRINK ON SCROLL */
+body.scrolled .header,
+body.scrolled .main-header {
+    height: 70px;
+    background: var(--header-bg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+body.scrolled .logo-img {
+    height: 45px;
+}
+
+body.scrolled .brand-name {
+    font-size: 14px;
+}
+
+body.scrolled .brand-sub {
+    font-size: 7px;
 }
 
 .header-container {
@@ -351,6 +380,26 @@ p {
     font-weight: 800;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(184, 156, 125, 0.3);
+}
+
+@media (max-width: 768px) {
+    .profile-icon {
+        animation: mobileProfilePulse 3s infinite ease-in-out;
+    }
+}
+
+@keyframes mobileProfilePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(184, 156, 125, 0.3);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(184, 156, 125, 0.5);
+    }
 }
 
 .profile-text-group {
@@ -687,59 +736,104 @@ body.dark-mode .login-input {
     /* UNIFIED MOBILE HEADER STYLES */
     .header,
     .main-header {
-        height: var(--header-height);
+        height: var(--header-height) !important;
         padding: 0 15px;
         justify-content: space-between;
+        background: var(--header-bg) !important;
+        backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid var(--border-color) !important;
     }
 
-    .header-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    /* Logo Scaling */
+    /* Logo Styling on Mobile */
     .logo {
         gap: 8px;
     }
 
     .logo-img {
-        height: 36px;
-        /* Smaller for mobile */
-    }
-
-    /* Admin Header Title Scaling */
-    .main-header span {
-        font-size: 14px;
-        letter-spacing: 1px;
-    }
-
-    .logo-text {
-        display: flex;
+        height: 32px !important;
     }
 
     .brand-name {
-        font-size: 14px;
+        font-size: 13px !important;
+        letter-spacing: 0.5px !important;
     }
 
-    /* Header Actions Scaling */
+    .brand-sub {
+        font-size: 6px !important;
+        letter-spacing: 2px !important;
+    }
+
+    /* Hide redundant elements */
+    .nav-links,
+    .header .admin-login-btn,
+    .main-header .header-actions .profile-btn span {
+        display: none !important;
+    }
+
     .header-actions {
-        gap: 10px;
+        gap: 8px;
+        display: flex;
+        align-items: center;
     }
 
-    .profile-btn {
-        padding: 6px;
-        border: none;
-        background: transparent;
+    .hamburger-btn {
+        display: block !important;
     }
 
-    .profile-text-group {
-        display: none;
+    /* Admin specific mobile cleanup */
+    .admin-body #app {
+        margin-top: 100px !important;
+        padding: 0 15px;
     }
 
-    /* CLIENT PAGE SPECIFIC: Hide Desktop Nav (Hamburger used instead) */
-    .header .nav-links {
-        display: none;
+    .admin-body .main-header .header-container span {
+        font-size: 11px !important;
+        letter-spacing: 1px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+
+    .admin-body .nav-links {
+        display: none !important;
+        /* Force hide top nav */
+    }
+
+    /* Admin Dashboard Mobile Fixes */
+    .admin-body #app {
+        margin-top: 80px !important;
+        padding: 0 15px !important;
+    }
+
+    .admin-body .card {
+        padding: 20px !important;
+        border-radius: 15px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .admin-body .section-header {
+        margin-bottom: 25px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+    }
+
+    .admin-body .grid-2 {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    .admin-body .cta-btn {
+        width: 100% !important;
+        padding: 15px !important;
+        font-size: 12px !important;
+    }
+
+    /* Stats Grid Fix */
+    #overview-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
     }
 
     /* ADMIN PAGE SPECIFIC: Turn Nav into Bottom Bar */
@@ -747,7 +841,8 @@ body.dark-mode .login-input {
         position: fixed;
         bottom: 20px;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translateX(-50%) translateY(100px);
+        /* Start off-screen */
         width: 90%;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
@@ -763,15 +858,32 @@ body.dark-mode .login-input {
         align-items: center;
         gap: 0;
         overflow-x: auto;
+        animation: mobileNavEntrance 1.2s cubic-bezier(0.19, 1, 0.22, 1) 0.5s forwards;
     }
 
-    /* Adjust Admin Nav Links for Bottom Bar */
+    @keyframes mobileNavEntrance {
+        from {
+            transform: translateX(-50%) translateY(100px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
     .main-header .nav-link,
     .main-header .nav-tab {
         font-size: 9px;
         padding: 10px;
         white-space: nowrap;
         opacity: 0.6;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
     }
 
     .main-header .nav-link.active,
@@ -779,8 +891,8 @@ body.dark-mode .login-input {
         opacity: 1;
         color: var(--accent);
         border-bottom: none;
-        /* Remove desktop underline */
         font-weight: 800;
+        transform: translateY(-5px);
     }
 
     /* Dark Mode Support for Bottom Bar */
@@ -1992,13 +2104,10 @@ body.home-view #app {
 .exhibition-item {
     position: relative;
     overflow: hidden;
-    border-radius: 30px;
-    /* Matching experience categories */
-    background: #ffffff;
     aspect-ratio: 1;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--shadow-md);
     border: none;
+    cursor: pointer;
 }
 
 .exhibition-item img,
@@ -3759,5 +3868,33 @@ body.home-view:not(.scrolled) .brand-sub {
 
     .specialty-card {
         min-width: 280px;
+    }
+
+    /* --- RESPONSIVE ENQUIRY ENHANCEMENTS --- */
+    .input-row-multi {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 600px) {
+        .input-row-multi {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .enquiry-card-premium {
+            padding: 30px 20px !important;
+            border-radius: 30px !important;
+            margin-bottom: 40px;
+        }
+
+        .enquiry-card-premium h3 {
+            font-size: 22px !important;
+        }
+
+        .enquiry-card-premium p {
+            font-size: 13px !important;
+        }
     }
 }

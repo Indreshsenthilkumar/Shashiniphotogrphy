@@ -22,7 +22,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // SECURITY: Set security-related HTTP headers
 app.use(helmet());

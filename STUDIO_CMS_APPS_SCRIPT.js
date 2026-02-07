@@ -9,7 +9,8 @@
  * 3. Deploy as Web App (Execute as: Me, Who has access: Anyone).
  */
 
-const CMS_TAB_NAME = "studiocms";
+const SHEET_NAME = "ShashiniPhotography"; // The name of the Google Sheet file
+const CMS_TAB_NAME = "studiocms"; // The name of the tab inside the sheet
 const FOLDER_NAME = "Studio_Website_Media";
 const HEADING_TITLE = "SHASHINI STUDIO CMS";
 

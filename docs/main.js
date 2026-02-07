@@ -389,52 +389,65 @@ function render() {
 
     // Toggle home-view class for transparent header
     document.body.classList.toggle('home-view', state.view === 'home');
+    renderAuthButtons();
 
-    // --- ADMIN AUTH ---
-    window.showAdminLoginModal = () => {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="login-modal" style="max-width:380px;">
-                <h2 style="text-align:center; margin-bottom:25px;">Admin Access</h2>
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label class="input-label-premium">USERNAME</label>
-                    <input type="text" id="admin-user" class="login-input" placeholder="Admin Username">
-                </div>
-                <div class="input-group" style="margin-bottom: 30px;">
-                    <label class="input-label-premium">PASSWORD</label>
-                    <input type="password" id="admin-pass" class="login-input" placeholder="••••••">
-                </div>
-                
-                <button class="cta-btn" id="admin-submit" style="width: 100%; padding: 18px;">SECURE LOGIN ➔</button>
-                <div class="login-footer-link" onclick="this.closest('.modal-overlay').remove()">Cancel</div>
+    switch (state.view) {
+        case 'home': renderHome(); break;
+        case 'gallery': renderGallery(); break;
+        case 'bookings': renderBookings(); break;
+        case 'vault': renderVault(); break;
+        case 'messages': renderMessagesView(); break;
+        case 'profile': renderProfileView(); break;
+    }
+}
+
+// --- ADMIN AUTH ---
+window.showAdminLoginModal = () => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="login-modal" style="max-width:380px;">
+            <h2 style="text-align:center; margin-bottom:25px;">Admin Access</h2>
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label class="input-label-premium">USERNAME</label>
+                <input type="text" id="admin-user" class="login-input" placeholder="Admin Username">
             </div>
-        `;
-        document.body.appendChild(modal);
+            <div class="input-group" style="margin-bottom: 30px;">
+                <label class="input-label-premium">PASSWORD</label>
+                <input type="password" id="admin-pass" class="login-input" placeholder="••••••">
+            </div>
+            
+            <button class="cta-btn" id="admin-submit" style="width: 100%; padding: 18px;">SECURE LOGIN ➔</button>
+            <div class="login-footer-link" onclick="this.closest('.modal-overlay').remove()">Cancel</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
 
-        // Focus
-        setTimeout(() => document.getElementById('admin-user').focus(), 100);
+    // Focus
+    setTimeout(() => document.getElementById('admin-user').focus(), 100);
 
-        // Submit Handler
-        document.getElementById('admin-submit').onclick = () => {
-            const u = document.getElementById('admin-user').value;
-            const p = document.getElementById('admin-pass').value;
+    // Submit Handler
+    document.getElementById('admin-submit').onclick = () => {
+        const u = document.getElementById('admin-user').value;
+        const p = document.getElementById('admin-pass').value;
 
-            if (u === 'admin123' && p === '098765') {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                window.location.href = './admin.html';
-            } else {
-                alert('Invalid Credentials');
-            }
-        };
+        if (u === 'admin123' && p === '098765') {
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            window.location.href = './admin.html';
+        } else {
+            alert('Invalid Credentials');
+        }
     };
+};
 
-    if (loginBtn) {
-        if (state.user) {
-            // Logged In State
-            const userName = state.user.name || 'User';
-            const initial = userName.charAt(0).toUpperCase();
-            loginBtn.innerHTML = `
+function renderAuthButtons() {
+    const loginBtn = document.querySelector('.profile-btn');
+    if (!loginBtn) return;
+    if (state.user) {
+        // Logged In State
+        const userName = state.user.name || 'User';
+        const initial = userName.charAt(0).toUpperCase();
+        loginBtn.innerHTML = `
                 <div class="profile-icon">
                     <span>${initial}</span>
                 </div>
@@ -443,9 +456,9 @@ function render() {
                     <span class="profile-name">${userName}</span>
                 </div>
             `;
-        } else {
-            // Logged Out State
-            loginBtn.innerHTML = `
+    } else {
+        // Logged Out State
+        loginBtn.innerHTML = `
                 <div class="profile-icon" style="background: transparent; border: 1.5px solid var(--border-color); color: var(--text-primary);">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -457,18 +470,10 @@ function render() {
                     <span class="profile-name" style="font-size: 11px;">SIGN IN</span>
                 </div>
             `;
-        }
-    }
-
-    switch (state.view) {
-        case 'home': renderHome(); break;
-        case 'gallery': renderGallery(); break;
-        case 'bookings': renderBookings(); break;
-        case 'vault': renderVault(); break;
-        case 'messages': renderMessagesView(); break;
-        case 'profile': renderProfileView(); break;
     }
 }
+
+
 
 function renderHome() {
     app.innerHTML = `

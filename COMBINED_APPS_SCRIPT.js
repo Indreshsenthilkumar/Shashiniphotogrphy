@@ -4,12 +4,17 @@
  * This script combines EVERYTHING: Bookings, Vaults, CMS (Gallery/Hero/Graphics), 
  * Messages, and Client Profiles into one powerful backend.
  * 
+ * Includes Google Drive Image Storage for CMS.
+ * 
  * 1. Copy this entire code.
  * 2. Delete EVERYTHING in your current Apps Script Editor.
  * 3. Paste this code.
- * 4. Ensure you have tabs named: "vaults", "booking", "message", "cms", "clientlogin".
+ * 4. Ensure you have tabs named: "vaults", "booking", "message", "clientlogin", "studiocms".
  * 5. Click "Deploy" > "New Deployment" > "Web App".
  */
+
+const CMS_TAB_NAME = "studiocms";
+const MEDIA_FOLDER_NAME = "Studio_Website_Media";
 
 function doGet(e) {
     var lock = LockService.getScriptLock();
@@ -30,7 +35,7 @@ function doGet(e) {
 
 function doPost(e) {
     var lock = LockService.getScriptLock();
-    lock.tryLock(10000);
+    lock.tryLock(30000); // 30 second lock for large uploads
     try {
         var data = JSON.parse(e.postData.contents);
         var action = data.action;
@@ -44,11 +49,14 @@ function doPost(e) {
         if (action === 'updateBooking') return updateBooking(data);
         if (action === 'deleteBooking') return deleteBooking(data.id);
 
-        // CMS ACTIONS (Gallery, Hero, Graphics)
-        if (action === 'addMedia' || action === 'saveGallery' || action === 'saveHeroSlide') return saveCMSMedia(data);
-        if (action === 'deleteMedia' || action === 'deleteGallery' || action === 'deleteHeroSlide') return deleteCMSMedia(data.id);
+        // CMS ACTIONS - Using New Logic
+        if (action === 'addMedia' || action === 'saveGallery' || action === 'saveHeroSlide' || action === 'saveGraphic') {
+            return saveCMSMedia(data);
+        }
+        if (action === 'deleteMedia' || action === 'deleteGallery' || action === 'deleteHeroSlide') {
+            return deleteCMSMedia(data.id);
+        }
         if (action === 'saveHeroConfig') return saveHeroConfig(data);
-        if (action === 'saveGraphic') return saveGraphic(data);
 
         // PROFILE & LOGIN
         if (action === 'updateProfile') return updateClientProfile(data);
@@ -67,85 +75,110 @@ function responseJSON(data) {
     return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// --- CMS LOGIC ---
+// --- NEW CMS LOGIC (With Google Drive) ---
+
 function getCMS() {
-    var sheet = getOrCreateSheet('cms');
+    var sheet = getOrCreateSheet(CMS_TAB_NAME);
     var rows = sheet.getDataRange().getValues();
     rows.shift(); // Remove headers
+
     var cms = { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
 
     rows.forEach(function (row) {
-        var type = row[0];
-        try {
-            var data = JSON.parse(row[1]);
-            if (type === 'gallery' || type === 'Gallery') cms.items.push(data);
-            else if (type === 'heroSlide' || type === 'HeroSlide') cms.hero.slides.push(data);
-            else if (type === 'heroConfig') cms.hero.interval = data.interval || 5;
-            else if (type === 'graphic') cms.graphics[data.key] = data.url;
-        } catch (e) { }
+        var id = row[0];
+        var section = row[1];
+        var type = row[2];
+        var title = row[3];
+        var url = row[4];
+
+        if (section === "Gallery") cms.items.push({ id: id, type: type, title: title, url: url });
+        else if (section === "HeroSlide") cms.hero.slides.push({ id: id, type: type, title: title, url: url });
+        else if (section === "Config" && title === "interval") cms.hero.interval = parseInt(url) || 5;
+        else if (section === "Graphic") cms.graphics[type] = url; // For graphics, we store key in 'type' column for simplicity or mapping
     });
     return responseJSON(cms);
 }
 
+function getOrCreateMediaFolder() {
+    const folders = DriveApp.getFoldersByName(MEDIA_FOLDER_NAME);
+    if (folders.hasNext()) return folders.next();
+    return DriveApp.createFolder(MEDIA_FOLDER_NAME);
+}
+
 function saveCMSMedia(data) {
-    var sheet = getOrCreateSheet('cms');
-    var type = (data.section === 'HeroSlide' || data.action === 'saveHeroSlide') ? 'heroSlide' : 'gallery';
-    var entry = {
-        id: data.id || "ID_" + new Date().getTime(),
-        type: data.type || 'image',
-        title: data.title || 'Untitled',
-        url: data.url
-    };
-    sheet.appendRow([type, JSON.stringify(entry)]);
-    return responseJSON({ success: true, id: entry.id });
+    var sheet = getOrCreateSheet(CMS_TAB_NAME);
+    var finalUrl = data.url;
+    var section = data.section;
+
+    // Normalize section names
+    if (data.action === 'saveHeroSlide') section = "HeroSlide";
+    if (data.action === 'saveGallery') section = "Gallery";
+    if (data.action === 'saveGraphic') section = "Graphic";
+
+    // Base64 Upload to Drive
+    if (data.url && data.url.toString().startsWith("data:")) {
+        try {
+            var folder = getOrCreateMediaFolder();
+            var contentType = data.url.substring(5, data.url.indexOf(";"));
+            var bytes = Utilities.base64Decode(data.url.split(",")[1]);
+            var fileName = (data.title || data.key || "upload") + "_" + new Date().getTime();
+
+            var file = folder.createFile(Utilities.newBlob(bytes, contentType, fileName));
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+            finalUrl = "https://drive.google.com/uc?export=view&id=" + file.getId();
+        } catch (e) {
+            return responseJSON({ success: false, error: "Drive Upload Failed: " + e.toString() });
+        }
+    }
+
+    // Handle Graphics Updates (Overwrite existing key)
+    if (section === "Graphic") {
+        var key = data.key || data.type; // frontend sends key
+        var rows = sheet.getDataRange().getValues();
+        for (var i = 1; i < rows.length; i++) {
+            if (rows[i][1] === "Graphic" && rows[i][2] === key) {
+                sheet.getRange(i + 1, 5).setValue(finalUrl);
+                return responseJSON({ success: true, url: finalUrl });
+            }
+        }
+        // If not found, append
+        sheet.appendRow([new Date().getTime().toString(), "Graphic", key, "Graphic Image", finalUrl]);
+        return responseJSON({ success: true, url: finalUrl });
+    }
+
+    // Append standard media (Gallery/Hero)
+    var newId = data.id || new Date().getTime().toString();
+    sheet.appendRow([newId, section, data.type || 'image', data.title || '', finalUrl]);
+    return responseJSON({ success: true, id: newId, url: finalUrl });
 }
 
 function deleteCMSMedia(id) {
-    var sheet = getOrCreateSheet('cms');
+    var sheet = getOrCreateSheet(CMS_TAB_NAME);
     var rows = sheet.getDataRange().getValues();
     for (var i = 1; i < rows.length; i++) {
-        try {
-            var entry = JSON.parse(rows[i][1]);
-            if (String(entry.id) === String(id)) {
-                sheet.deleteRow(i + 1);
-                return responseJSON({ success: true });
-            }
-        } catch (e) { }
+        if (String(rows[i][0]) === String(id)) {
+            sheet.deleteRow(i + 1);
+            return responseJSON({ success: true });
+        }
     }
     return responseJSON({ success: false, error: 'ID not found' });
 }
 
 function saveHeroConfig(data) {
-    var sheet = getOrCreateSheet('cms');
+    var sheet = getOrCreateSheet(CMS_TAB_NAME);
     var rows = sheet.getDataRange().getValues();
+    var found = false;
     for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] === 'heroConfig') {
-            sheet.getRange(i + 1, 2).setValue(JSON.stringify({ interval: data.interval }));
-            return responseJSON({ success: true });
+        if (rows[i][1] === "Config" && rows[i][3] === "interval") {
+            sheet.getRange(i + 1, 5).setValue(data.interval);
+            found = true; break;
         }
     }
-    sheet.appendRow(['heroConfig', JSON.stringify({ interval: data.interval })]);
+    if (!found) sheet.appendRow([new Date().getTime(), "Config", "number", "interval", data.interval]);
     return responseJSON({ success: true });
 }
 
-function saveGraphic(data) {
-    var sheet = getOrCreateSheet('cms');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] === 'graphic') {
-            try {
-                var entry = JSON.parse(rows[i][1]);
-                if (entry.key === data.key) {
-                    entry.url = data.url;
-                    sheet.getRange(i + 1, 2).setValue(JSON.stringify(entry));
-                    return responseJSON({ success: true });
-                }
-            } catch (e) { }
-        }
-    }
-    sheet.appendRow(['graphic', JSON.stringify({ key: data.key, url: data.url })]);
-    return responseJSON({ success: true });
-}
 
 // --- VAULT LOGIC ---
 function getVaults() {
@@ -219,7 +252,7 @@ function getOrCreateSheet(name) {
     if (!sheet) {
         sheet = ss.insertSheet(name);
         if (name === 'vaults') sheet.appendRow(['ID', 'Vault ID', 'Session Title', 'Customer Name', 'Customer Mobile', 'Session Type', 'Status', 'Created At', 'Workflow Status']);
-        if (name === 'cms') sheet.appendRow(['Type', 'Data']);
+        if (name === 'studiocms') sheet.appendRow(['ID', 'Section', 'Type', 'Title', 'URL']);
         if (name === 'booking') sheet.appendRow(['ID', 'Client Name', 'Mobile', 'Email', 'Event Type', 'Date', 'Status', 'Notes', 'Created At']);
         if (name === 'message') sheet.appendRow(['Timestamp', 'Sender', 'Mobile', 'Email', 'Text', 'Replies', 'Status']);
         if (name === 'clientlogin') sheet.appendRow(['Mobile', 'Name', 'Email', 'Created At', 'Last Login', 'Login Count']);
@@ -227,8 +260,7 @@ function getOrCreateSheet(name) {
     return sheet;
 }
 
-// --- OTHER LOGIC (Bookings, Messages, Profiles) follows same pattern ---
-// [Trimming for brevity but including essential structures]
+// --- OTHER LOGIC (Bookings, Messages, Profiles) ---
 
 function getBookings() {
     var sheet = getOrCreateSheet('booking');

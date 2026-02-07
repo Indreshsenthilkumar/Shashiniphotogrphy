@@ -1256,12 +1256,16 @@ window.uploadGraphic = async (key, e) => {
     try {
         const base64 = await fileToBase64(file);
 
-        // 1. Sync to local backend first (for reliability)
-        await fetch(`${API_URL}/cms/graphics`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, url: base64 })
-        });
+        // 1. Sync to local backend if available (don't block if failed)
+        try {
+            await fetch(`${API_URL}/cms/graphics`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, url: base64 })
+            });
+        } catch (localErr) {
+            console.warn('[Local Sync] Local backend unreachable, skipping local sync.');
+        }
 
         // 2. Sync to Google Sheets
         await fetch(CMS_SHEET_URL, {

@@ -11,6 +11,7 @@
 
 const CMS_TAB_NAME = "studiocms";
 const FOLDER_NAME = "Studio_Website_Media";
+const HEADING_TITLE = "SHASHINI STUDIO CMS";
 
 function doPost(e) {
     const lock = LockService.getScriptLock();

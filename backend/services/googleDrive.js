@@ -28,35 +28,45 @@ class GoogleDriveService {
                 });
             } else if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
                 // Robust initialization of private key
-                let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+                let privateKey = process.env.GOOGLE_PRIVATE_KEY.trim();
 
-                // Remove surrounding quotes if they exist
-                if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-                    privateKey = privateKey.substring(1, privateKey.length - 1);
-                }
-                if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
-                    privateKey = privateKey.substring(1, privateKey.length - 1);
-                }
+                // 1. Remove surrounding quotes (detected in logs as a common issue)
+                privateKey = privateKey.replace(/^['"]|['"]$/g, '');
 
-                // Replace literal \n with actual newlines
+                // 2. Fix Double Escaping (sometimes Railway/Windows shell adds backslashes)
+                // We convert \\n to \n first, then literal \n to actual newlines
                 privateKey = privateKey.replace(/\\n/g, '\n');
+
+                // 3. Last-resort cleaning: Ensure it starts and ends with the correct headers
+                // This manually trims any garbage characters before and after the key blocks
+                const beginTag = "-----BEGIN PRIVATE KEY-----";
+                const endTag = "-----END PRIVATE KEY-----";
+
+                if (privateKey.includes(beginTag) && privateKey.includes(endTag)) {
+                    privateKey = privateKey.substring(
+                        privateKey.indexOf(beginTag),
+                        privateKey.indexOf(endTag) + endTag.length
+                    );
+                }
+
+                console.log(`[GoogleDrive] Key check: Starts with ${privateKey.substring(0, 20)}... Size: ${privateKey.length} chars`);
 
                 auth = new google.auth.GoogleAuth({
                     credentials: {
-                        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+                        client_email: process.env.GOOGLE_CLIENT_EMAIL.trim(),
                         private_key: privateKey,
                     },
                     scopes: ['https://www.googleapis.com/auth/drive'],
                 });
             } else {
-                console.warn('Google Drive credentials not found. API calls will fail.');
+                console.warn('Google Drive credentials NOT FOUND in environment variables.');
                 return;
             }
 
             this.drive = google.drive({ version: 'v3', auth });
-            console.log('[GoogleDrive] Service initialized & authenticated successfully.');
+            console.log('[GoogleDrive] Service initialized successful.');
         } catch (error) {
-            console.error('Failed to authenticate with Google Drive:', error);
+            console.error('CRITICAL AUTH ERROR:', error.message);
         }
     }
 

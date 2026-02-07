@@ -27,10 +27,24 @@ class GoogleDriveService {
                     scopes: ['https://www.googleapis.com/auth/drive'],
                 });
             } else if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+                // Robust initialization of private key
+                let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+                // Remove surrounding quotes if they exist
+                if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+                    privateKey = privateKey.substring(1, privateKey.length - 1);
+                }
+                if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+                    privateKey = privateKey.substring(1, privateKey.length - 1);
+                }
+
+                // Replace literal \n with actual newlines
+                privateKey = privateKey.replace(/\\n/g, '\n');
+
                 auth = new google.auth.GoogleAuth({
                     credentials: {
                         client_email: process.env.GOOGLE_CLIENT_EMAIL,
-                        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                        private_key: privateKey,
                     },
                     scopes: ['https://www.googleapis.com/auth/drive'],
                 });

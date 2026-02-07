@@ -304,7 +304,7 @@ async function fetchGlobalData() {
         }
 
         // 2. Fetch CMS data from Google Sheet Apps Script for global items
-        const sheetData = await fetch(CMS_SHEET_URL).then(r => r.json()).catch(() => null);
+        const sheetData = await fetch(`${CMS_SHEET_URL}?action=getCMS`).then(r => r.json()).catch(() => null);
 
         if (sheetData) {
             // MERGE: Prefer sheet for gallery/hero slides, but keep local graphics if they were recently updated
@@ -313,8 +313,12 @@ async function fetchGlobalData() {
 
             // Graphics merging: Only use sheet graphics if local doesn't have them
             if (sheetData.graphics) {
+                // If we are on public site (no local API), the sheet graphics MUST overwrite local state
+                const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+
                 Object.keys(sheetData.graphics).forEach(key => {
-                    if (!state.cms.graphics[key]) {
+                    // Update if local doesn't have it OR if we are on the public hosted site
+                    if (!state.cms.graphics[key] || !isLocal) {
                         state.cms.graphics[key] = sheetData.graphics[key];
                     }
                 });

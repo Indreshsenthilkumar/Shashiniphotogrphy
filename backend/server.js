@@ -31,14 +31,16 @@ console.log('[Server] Start-up: Trust Proxy enabled.');
 // SECURITY: Set security-related HTTP headers
 app.use(helmet());
 
-// SECURITY: Basic Rate Limiting to prevent DDoS/Brute Force
+// SECURITY: Rate Limiting (DISABLED TEMPORARILY TO PREVENT RAILWAY CRASH)
+/*
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
+    windowMs: 15 * 60 * 1000, 
     max: 1000,
     message: 'Too many requests.',
-    validate: { trustProxy: false }, // Disables the check that's causing the crash
+    validate: { trustProxy: false }, 
 });
 app.use('/api/', limiter);
+*/
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Reduced slightly for safety

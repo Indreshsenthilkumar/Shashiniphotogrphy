@@ -38,15 +38,23 @@ class GoogleDriveService {
                 privateKey = privateKey.replace(/\\n/g, '\n');
 
                 // 3. Last-resort cleaning: Ensure it starts and ends with the correct headers
-                // This manually trims any garbage characters before and after the key blocks
                 const beginTag = "-----BEGIN PRIVATE KEY-----";
                 const endTag = "-----END PRIVATE KEY-----";
 
-                if (privateKey.includes(beginTag) && privateKey.includes(endTag)) {
-                    privateKey = privateKey.substring(
-                        privateKey.indexOf(beginTag),
-                        privateKey.indexOf(endTag) + endTag.length
-                    );
+                // 4. FIX: If the headers are completely missing (common when copy-pasting raw values)
+                if (!privateKey.includes(beginTag)) {
+                    console.log("[GoogleDrive] Detected missing PEM headers. Attempting auto-repair...");
+                    // Ensure the string is clean (no spaces)
+                    privateKey = privateKey.replace(/\s+/g, '');
+                    privateKey = `${beginTag}\n${privateKey}\n${endTag}`;
+                } else {
+                    // It has headers, but maybe garbage around them?
+                    if (privateKey.includes(beginTag) && privateKey.includes(endTag)) {
+                        privateKey = privateKey.substring(
+                            privateKey.indexOf(beginTag),
+                            privateKey.indexOf(endTag) + endTag.length
+                        );
+                    }
                 }
 
                 console.log(`[GoogleDrive] Key check: Starts with ${privateKey.substring(0, 20)}... Size: ${privateKey.length} chars`);

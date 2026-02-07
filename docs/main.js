@@ -897,7 +897,7 @@ function renderBookings() {
     Cal.ns["shashini-studio"]("inline", {
         elementOrSelector: "#my-cal-inline-shashini-studio",
         config: { "layout": "month_view", "useSlotsViewOnSmallScreen": "true" },
-        calLink: "indresh-s-eawnbg/shashini-studio",
+        calLink: "shashini-studio",
     });
 
     Cal.ns["shashini-studio"]("ui", { "hideEventTypeDetails": false, "layout": "month_view" });

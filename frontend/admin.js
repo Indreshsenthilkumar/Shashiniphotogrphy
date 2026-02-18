@@ -1,6 +1,6 @@
 const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8yajS1Qwjipx_oeK19yYCZLVbm2-wcLwlH05x98fnuH5EzzlJLYpVwMX2fzndPAW1/exec';
-const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbz8yajS1Qwjipx_oeK19yYCZLVbm2-wcLwlH05x98fnuH5EzzlJLYpVwMX2fzndPAW1/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymHcV4JOdFk5geINGLBPe0SUPV3quv2TL0yKs8nX2AzAGuf0Ika-0WY8A8wkWzV06Y/exec';
+const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbymHcV4JOdFk5geINGLBPe0SUPV3quv2TL0yKs8nX2AzAGuf0Ika-0WY8A8wkWzV06Y/exec';
 
 // --- SECURE SHIELD ---
 window.onerror = function (msg) { console.error('[Admin Shield]', msg); return true; };

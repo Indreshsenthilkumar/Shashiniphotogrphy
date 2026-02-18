@@ -4046,13 +4046,109 @@ body.home-view:not(.scrolled) .brand-sub {
         font-weight: 800;
     }
 
-    .mobile-menu .close-menu-btn {
-        align-self: flex-end;
-        margin-bottom: 20px;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: var(--text-primary);
+    /* --- ADMIN MOBILE RESPONSIVENESS OVERRIDES --- */
+    .admin-body .main-header {
+        padding: 10px 20px;
+        height: auto;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .admin-body .nav-links {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 5px;
+        gap: 10px;
+        scrollbar-width: none;
+    }
+
+    .admin-body .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-body .nav-tab {
+        padding: 8px 15px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    .admin-body .container {
+        margin-top: 140px !important;
+        padding: 0 15px;
+    }
+
+    .admin-body .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .admin-body .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-body .card {
+        padding: 20px !important;
+    }
+
+    /* Messenger/Messages Responsiveness */
+    .admin-body #messages-wrapper .toolbar-header,
+    .admin-body #messages-wrapper>div:first-child {
+        flex-direction: column;
+        align-items: stretch !important;
+        padding: 20px !important;
+        gap: 20px;
+    }
+
+    .admin-body #messages-wrapper div[style*="width: 400px"] {
+        width: 100% !important;
+    }
+
+    .admin-body .message-thread {
+        padding: 15px !important;
+        max-height: 400px;
+    }
+
+    .admin-body .msg-bubble {
+        max-width: 90%;
+    }
+
+    /* CMS Responsiveness */
+    .admin-body #graphics-manager>div:last-child {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-body .premium-grid-card {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-body .premium-grid-card>div:first-child {
+        min-height: 300px !important;
+    }
+
+    .admin-body .story-content {
+        padding: 30px !important;
+    }
+
+    /* Modal Responsiveness */
+    .admin-body .login-modal {
+        width: 95% !important;
+        margin: 10px !important;
+        padding: 30px 20px !important;
+    }
+
+    .admin-body .modal-overlay {
+        padding: 20px;
+        display: flex;
+        align-items: flex-end;
+        /* Mobile bottom sheet style */
+    }
+
+    .admin-body .login-modal {
+        border-radius: 30px 30px 0 0;
+        margin-bottom: -20px !important;
+        max-width: none !important;
     }
 }

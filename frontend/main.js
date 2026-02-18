@@ -491,9 +491,9 @@ function renderHome() {
                 ? `<video src="${getImageUrl(state.cms.hero.slides[0].url)}" class="hero-slide-item" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; z-index:1;" muted loop playsinline autoplay></video>`
                 : `<img src="${getImageUrl(state.cms.hero.slides[0].url)}" class="hero-slide-item" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; z-index:1;">`
         ) : `
-                    <div style="position:absolute; inset:0; background: #000;"></div>
-                    <img src="./hero-bg.png" class="hero-slide-bg" alt="Shashini Photographer 1" style="opacity:0.6;">
-                `}
+                     <div style="position:absolute; inset:0; background: #000;"></div>
+                     <img src="./logo.png" class="hero-slide-bg" alt="Shashini Photography" style="opacity:0.3; object-fit: contain; width: 60%; height: 60%; left: 50%; top: 50%; transform: translate(-50%, -50%); position: absolute;">
+                 `}
             </div>
             
             <div class="hero-main-content" style="z-index: 2; position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px;">
@@ -560,7 +560,7 @@ function renderHome() {
             <div class="premium-grid-card" style="background: var(--card-bg); border-radius: 40px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; box-shadow: var(--shadow-lg); transition: all 0.5s ease;">
                 <!-- Left: Image -->
                 <div style="position: relative; min-height: 500px; overflow: hidden;">
-                     <img src="${state.cms.graphics?.artist ? getImageUrl(state.cms.graphics.artist) : './gallery-1.png'}" alt="The Artist" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                     <img src="${state.cms.graphics?.artist ? getImageUrl(state.cms.graphics.artist) : './logo.png'}" alt="The Artist" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: contain; background: var(--card-bg); position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0.6;">
                 </div>
 
                 <!-- Right: Content -->
@@ -734,7 +734,7 @@ function renderHome() {
              <div class="premium-grid-card" style="background: var(--card-bg); border-radius: 40px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; box-shadow: var(--shadow-lg); transition: all 0.5s ease;">
                 <!-- Left: Image (Full Grid Cell) -->
                 <div style="position: relative; min-height: 400px; overflow: hidden;">
-                    <img src="${state.cms.graphics?.whoWeAre ? getImageUrl(state.cms.graphics.whoWeAre) : './gallery-1.png'}" alt="Our Story" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                    <img src="${state.cms.graphics?.whoWeAre ? getImageUrl(state.cms.graphics.whoWeAre) : './logo.png'}" alt="Our Story" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: contain; background: var(--card-bg); position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0.6;">
                 </div>
 
                 <!-- Right: Content -->
@@ -762,7 +762,7 @@ function renderHome() {
                 </div>
                 <!-- Right: Image (Converted to img tag for zoom effect) -->
                 <div style="position: relative; min-height: 400px; overflow: hidden;">
-                     <img src="${state.cms.graphics?.readyToBegin ? getImageUrl(state.cms.graphics.readyToBegin) : './gallery-2.png'}" alt="Enquiry" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);">
+                     <img src="${state.cms.graphics?.readyToBegin ? getImageUrl(state.cms.graphics.readyToBegin) : './logo.png'}" alt="Enquiry" class="story-img-zoom" style="width: 100%; height: 100%; object-fit: contain; background: var(--card-bg); position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0.6;">
                 </div>
             </div>
         </section>

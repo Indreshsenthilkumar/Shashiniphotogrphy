@@ -4,5 +4,9 @@ dist
 .DS_Store
 data/selections.json
 backend/credentials.json
+<<<<<<< Updated upstream
 backend/fix-creds.js
 render-env-vars.txt
+=======
+backend/fix-creds.js
+>>>>>>> Stashed changes

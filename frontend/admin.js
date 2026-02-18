@@ -1,5 +1,5 @@
 const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5mtk_rdyaeXB5_YTIXO12NvqlXaSYNKiREsIMJ3FsDDMEmg2aiOc9ExlNYxH03u8k/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
 const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
 
 // --- SECURE SHIELD ---

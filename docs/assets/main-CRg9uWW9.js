@@ -1,4 +1,4 @@
-import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy-production.up.railway.app/api",w="https://script.google.com/macros/s/AKfycbz5mtk_rdyaeXB5_YTIXO12NvqlXaSYNKiREsIMJ3FsDDMEmg2aiOc9ExlNYxH03u8k/exec",T="https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec",m=document.getElementById("app"),f=document.querySelector(".profile-btn");function p(t){return t?t.startsWith("http")||t.startsWith("data:")||t.startsWith("./")||t.startsWith("../")?t:t.startsWith("/")?g+t:g+"/"+t:""}window.onerror=function(t){return console.error("[App Shield]",t),!0};window.onunhandledrejection=function(t){console.error("[App Shield] Rejection",t.reason)};async function C(t,i={},o=2e4){const s=new AbortController,n=setTimeout(()=>s.abort(),o);try{const a=await fetch(t,{...i,signal:s.signal});if(clearTimeout(n),!a.ok)throw new Error(`HTTP ${a.status}`);return await a.json()}catch(a){return clearTimeout(n),console.warn(`[SecureFetch] Error: ${t}`,a.message),null}}let e={user:JSON.parse(localStorage.getItem("user"))||null,view:"home",vaults:[],currentVault:null,photos:[],selectedPhotos:new Set,cms:{items:[],hero:{slides:[],interval:5},graphics:{}},messages:[]};async function $(){document.getElementById("global-loader")||document.body.insertAdjacentHTML("beforeend",`
+import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy-production.up.railway.app/api",w="https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec",T="https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec",m=document.getElementById("app"),f=document.querySelector(".profile-btn");function p(t){return t?t.startsWith("http")||t.startsWith("data:")||t.startsWith("./")||t.startsWith("../")?t:t.startsWith("/")?g+t:g+"/"+t:""}window.onerror=function(t){return console.error("[App Shield]",t),!0};window.onunhandledrejection=function(t){console.error("[App Shield] Rejection",t.reason)};async function C(t,i={},o=2e4){const s=new AbortController,n=setTimeout(()=>s.abort(),o);try{const a=await fetch(t,{...i,signal:s.signal});if(clearTimeout(n),!a.ok)throw new Error(`HTTP ${a.status}`);return await a.json()}catch(a){return clearTimeout(n),console.warn(`[SecureFetch] Error: ${t}`,a.message),null}}let e={user:JSON.parse(localStorage.getItem("user"))||null,view:"home",vaults:[],currentVault:null,photos:[],selectedPhotos:new Set,cms:{items:[],hero:{slides:[],interval:5},graphics:{}},messages:[]};async function $(){document.getElementById("global-loader")||document.body.insertAdjacentHTML("beforeend",`
         <div id="global-loader" class="global-loader-overlay">
             <div class="burst-loader">
                 <div></div><div></div><div></div><div></div><div></div><div></div>
@@ -62,7 +62,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy
                     <span class="profile-label">CLIENT PORTAL</span>
                     <span class="profile-name" style="font-size: 11px;">SIGN IN</span>
                 </div>
-            `;switch(e.view){case"home":A();break;case"gallery":B();break;case"bookings":N();break;case"vault":O();break;case"messages":I();break;case"profile":renderProfileView();break}}function A(){var t,i,o;m.innerHTML=`
+            `;switch(e.view){case"home":A();break;case"gallery":z();break;case"bookings":N();break;case"vault":O();break;case"messages":I();break;case"profile":renderProfileView();break}}function A(){var t,i,o;m.innerHTML=`
 
         <section class="new-hero fade-in">
             <!-- Dynamic Hero Content (Video / Image) -->
@@ -239,7 +239,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy
 
         <!-- 4. Exhibition Preview (Gallery) -->
         <section class="container fade-in-up" style="margin-top: 120px;">
-             ${z()}
+             ${B()}
         </section>
 
         <!-- 5. How It Works (Process) -->
@@ -343,7 +343,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy
                 </div>
             </div>
         </section>
-    `,e.view==="home"&&(document.body.classList.add("home-view"),k())}function z(){const t=i=>"";return`
+    `,e.view==="home"&&(document.body.classList.add("home-view"),k())}function B(){const t=i=>"";return`
         <div class="section-header" style="flex-direction: column; align-items: center; text-align: center; gap: 10px;">
             <div>
                 <span class="section-subtitle">STUDIO HIGHLIGHTS</span>
@@ -377,7 +377,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";const g="https://shashiniphotogrphy
                 VIEW FULL GALLERY ➔
              </button>
         </div>
-    `}function B(){m.innerHTML=`
+    `}function z(){m.innerHTML=`
         <div class="container slide-up" style="margin-top: 60px;">
             <div class="section-header" style="flex-direction: column; align-items: center; text-align: center;">
                 <div>

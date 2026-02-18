@@ -382,6 +382,54 @@ function setupNavigation() {
     });
 }
 
+// --- ADMIN AUTH ---
+window.showAdminLoginModal = () => {
+    // 1. Close mobile menu if it's open
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenu) mobileMenu.classList.remove('active');
+
+    // 2. Create and show the modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '4000'; // Ensure it's above the mobile menu
+    modal.innerHTML = `
+        <div class="login-modal" style="max-width:380px;">
+            <h2 style="text-align:center; margin-bottom:25px;">Admin Access</h2>
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label class="input-label-premium">USERNAME</label>
+                <input type="text" id="admin-user" class="login-input" placeholder="Admin Username">
+            </div>
+            <div class="input-group" style="margin-bottom: 30px;">
+                <label class="input-label-premium">PASSWORD</label>
+                <input type="password" id="admin-pass" class="login-input" placeholder="••••••">
+            </div>
+            
+            <button class="cta-btn" id="admin-submit" style="width: 100%; padding: 18px;">SECURE LOGIN ➔</button>
+            <div class="login-footer-link" onclick="this.closest('.modal-overlay').remove()">Cancel</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Focus initial input
+    setTimeout(() => {
+        const input = document.getElementById('admin-user');
+        if (input) input.focus();
+    }, 100);
+
+    // Submit Handler
+    document.getElementById('admin-submit').onclick = () => {
+        const u = document.getElementById('admin-user').value;
+        const p = document.getElementById('admin-pass').value;
+
+        if (u === 'admin123' && p === '098765') {
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            window.location.href = './admin.html';
+        } else {
+            alert('Invalid Credentials');
+        }
+    };
+};
+
 // --- RENDERING ---
 
 function render() {
@@ -390,44 +438,6 @@ function render() {
     // Toggle home-view class for transparent header
     document.body.classList.toggle('home-view', state.view === 'home');
 
-    // --- ADMIN AUTH ---
-    window.showAdminLoginModal = () => {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="login-modal" style="max-width:380px;">
-                <h2 style="text-align:center; margin-bottom:25px;">Admin Access</h2>
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label class="input-label-premium">USERNAME</label>
-                    <input type="text" id="admin-user" class="login-input" placeholder="Admin Username">
-                </div>
-                <div class="input-group" style="margin-bottom: 30px;">
-                    <label class="input-label-premium">PASSWORD</label>
-                    <input type="password" id="admin-pass" class="login-input" placeholder="••••••">
-                </div>
-                
-                <button class="cta-btn" id="admin-submit" style="width: 100%; padding: 18px;">SECURE LOGIN ➔</button>
-                <div class="login-footer-link" onclick="this.closest('.modal-overlay').remove()">Cancel</div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        // Focus
-        setTimeout(() => document.getElementById('admin-user').focus(), 100);
-
-        // Submit Handler
-        document.getElementById('admin-submit').onclick = () => {
-            const u = document.getElementById('admin-user').value;
-            const p = document.getElementById('admin-pass').value;
-
-            if (u === 'admin123' && p === '098765') {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                window.location.href = './admin.html';
-            } else {
-                alert('Invalid Credentials');
-            }
-        };
-    };
 
     if (loginBtn) {
         if (state.user) {

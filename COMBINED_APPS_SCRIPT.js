@@ -1,364 +1,347 @@
 /**
- * DEFINITIVE COMBINED GOOGLE APPS SCRIPT
- * -------------------------------------
- * This script combines EVERYTHING: Bookings, Vaults, CMS (Gallery/Hero/Graphics), 
- * Messages, and Client Profiles into one powerful backend.
+ * SUPREME COMBINED GOOGLE APPS SCRIPT - SHASHINI STUDIO
+ * -----------------------------------------------------
+ * Features:
+ * 1. HIGH SPEED: Uses in-memory processing for rapid data retrieval.
+ * 2. CASE INSENSITIVE: Actions like "getCMS" or "getcms" both work.
+ * 3. MASTER SYNC: Real-time synchronization between Google Sheets and Web.
+ * 4. ALL-IN-ONE: Vaults, Bookings, CMS, Messages, and Client Profiles.
+ * 5. DRIVE STORAGE: Automatically handles base64 image uploads to Google Drive.
  * 
- * Includes Google Drive Image Storage for CMS.
- * 
- * 1. Copy this entire code.
- * 2. Delete EVERYTHING in your current Apps Script Editor.
- * 3. Paste this code.
- * 4. Ensure you have tabs named: "vaults", "booking", "message", "clientlogin", "studiocms".
- * 5. Click "Deploy" > "New Deployment" > "Web App".
+ * SETUP INSTRUCTIONS:
+ * 1. Open Google Apps Script Editor.
+ * 2. Delete ALL existing code.
+ * 3. Paste this entire script.
+ * 4. Ensure your Sheet has these tabs: "studiocms", "vaults", "booking", "message", "clientlogin".
+ * 5. Deploy as Web App -> Execute as: "Me" -> Who has access: "Anyone".
  */
 
-const CMS_TAB_NAME = "studiocms";
-const MEDIA_FOLDER_NAME = "Studio_Website_Media";
+// --- CONFIGURATION ---
+const TABS = {
+    CMS: "studiocms",
+    VAULTS: "vaults",
+    BOOKINGS: "booking",
+    MESSAGES: "message",
+    CLIENTS: "clientlogin"
+};
+const DRIVE_FOLDER_NAME = "Studio_Website_Media";
+
+// --- MAIN ENTRY POINTS ---
 
 function doGet(e) {
-    var lock = LockService.getScriptLock();
-    lock.tryLock(10000);
+    const action = (e.parameter.action || "").toLowerCase();
+
     try {
-        var action = e.parameter.action;
-        if (action === 'getVaults') return getVaults();
-        if (action === 'getBookings') return getBookings();
-        if (action === 'getCMS') return getCMS();
-        if (action === 'getProfile') return getClientProfile(e.parameter.mobile);
-        return getMessages(); // Default
-    } catch (e) {
-        return responseJSON({ 'error': e.toString() });
-    } finally {
-        lock.releaseLock();
+        if (action === 'getcms') return getCMSData();
+        if (action === 'getvaults') return getVaultsData();
+        if (action === 'getbookings') return getBookingsData();
+        if (action === 'getmessages') return getMessagesData();
+        if (action === 'getprofile') return getProfileData(e.parameter.mobile);
+
+        // Default fallback
+        return responseJSON({ status: "online", message: "Shashini Studio Backend is Active" });
+    } catch (err) {
+        return responseJSON({ success: false, error: err.toString() });
     }
 }
 
 function doPost(e) {
-    var lock = LockService.getScriptLock();
-    lock.tryLock(30000); // 30 second lock for large uploads
+    const lock = LockService.getScriptLock();
+    lock.tryLock(30000); // 30s lock for safety
+
     try {
-        var data = JSON.parse(e.postData.contents);
-        var action = data.action;
+        const data = JSON.parse(e.postData.contents);
+        const action = (data.action || "").toLowerCase();
 
-        // VAULT ACTIONS
-        if (action === 'addVault' || action === 'updateVault') return handleVault(data, action);
-        if (action === 'deleteVault') return deleteVault(data.id);
+        // CMS Actions
+        if (['addmedia', 'savegallery', 'saveheroslide', 'savegraphic'].includes(action)) return saveCMSMedia(data);
+        if (['deletemedia', 'deletegallery', 'deleteheroslide'].includes(action)) return deleteCMSMedia(data.id);
+        if (action === 'saveheroconfig') return saveHeroConfig(data);
 
-        // BOOKING ACTIONS
-        if (action === 'addBooking') return addBooking(data);
-        if (action === 'updateBooking') return updateBooking(data);
-        if (action === 'deleteBooking') return deleteBooking(data.id);
+        // Vault Actions
+        if (action === 'addvault' || action === 'updatevault') return handleVault(data);
+        if (action === 'deletevault') return deleteVault(data.id);
 
-        // CMS ACTIONS - Using New Logic
-        if (action === 'addMedia' || action === 'saveGallery' || action === 'saveHeroSlide' || action === 'saveGraphic') {
-            return saveCMSMedia(data);
-        }
-        if (action === 'deleteMedia' || action === 'deleteGallery' || action === 'deleteHeroSlide') {
-            return deleteCMSMedia(data.id);
-        }
-        if (action === 'saveHeroConfig') return saveHeroConfig(data);
+        // Booking Actions
+        if (action === 'addbooking') return addBooking(data);
+        if (action === 'updatebooking') return updateBooking(data);
+        if (action === 'deletebooking') return deleteBooking(data.id);
 
-        // PROFILE & LOGIN
-        if (action === 'updateProfile') return updateClientProfile(data);
-        if (action === 'logLogin') return logClientLogin(data);
-        if (action === 'updateMessage') return updateMessage(data);
+        // Message Actions
+        if (action === 'addmessage' || !action) return addMessage(data); // Default POST is message
+        if (action === 'updatemessage') return updateMessage(data);
 
-        return addMessage(data); // Default
-    } catch (e) {
-        return responseJSON({ 'result': 'error', 'error': e.toString() });
+        // Client/Profile Actions
+        if (action === 'updateprofile') return updateProfile(data);
+        if (action === 'loglogin') return logLogin(data);
+
+        return responseJSON({ success: false, error: "Action not recognized" });
+    } catch (err) {
+        return responseJSON({ success: false, error: err.toString() });
     } finally {
         lock.releaseLock();
     }
 }
 
-function responseJSON(data) {
-    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-}
+// --- CMS LOGIC ---
 
-// --- NEW CMS LOGIC (With Google Drive) ---
+function getCMSData() {
+    const sheet = getSheet(TABS.CMS);
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows.shift(); // Remove: ID, Section, Type, Title, URL
 
-function getCMS() {
-    var sheet = getOrCreateSheet(CMS_TAB_NAME);
-    var rows = sheet.getDataRange().getValues();
-    rows.shift(); // Remove headers
+    const result = { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
 
-    var cms = { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
+    rows.forEach(row => {
+        const [id, section, type, title, url] = row;
+        if (!section) return;
 
-    rows.forEach(function (row) {
-        var id = row[0];
-        var section = row[1];
-        var type = row[2];
-        var title = row[3];
-        var url = row[4];
-
-        if (section === "Gallery") cms.items.push({ id: id, type: type, title: title, url: url });
-        else if (section === "HeroSlide") cms.hero.slides.push({ id: id, type: type, title: title, url: url });
-        else if (section === "Config" && title === "interval") cms.hero.interval = parseInt(url) || 5;
-        else if (section === "Graphic") cms.graphics[title] = url; // Use Title as Key
+        const s = section.toLowerCase();
+        if (s === 'gallery') result.items.push({ id: String(id), type, title, url });
+        else if (s === 'heroslide') result.hero.slides.push({ id: String(id), type, title, url });
+        else if (s === 'config' && String(title).toLowerCase() === 'interval') result.hero.interval = parseInt(url) || 5;
+        else if (s === 'graphic') result.graphics[title] = url;
     });
-    return responseJSON(cms);
-}
 
-function getOrCreateMediaFolder() {
-    const folders = DriveApp.getFoldersByName(MEDIA_FOLDER_NAME);
-    if (folders.hasNext()) return folders.next();
-    return DriveApp.createFolder(MEDIA_FOLDER_NAME);
+    return responseJSON(result);
 }
 
 function saveCMSMedia(data) {
-    var sheet = getOrCreateSheet(CMS_TAB_NAME);
-    var finalUrl = data.url;
-    var section = data.section;
+    const sheet = getSheet(TABS.CMS);
+    let section = data.section || "Gallery";
+    const action = (data.action || "").toLowerCase();
 
-    // Normalize section names
-    if (data.action === 'saveHeroSlide') section = "HeroSlide";
-    if (data.action === 'saveGallery') section = "Gallery";
-    if (data.action === 'saveGraphic') section = "Graphic";
+    // Normalize Section
+    if (action === 'saveheroslide') section = "HeroSlide";
+    if (action === 'savegraphic') section = "Graphic";
 
-    // Base64 Upload to Drive
-    if (data.url && data.url.toString().startsWith("data:")) {
-        try {
-            var folder = getOrCreateMediaFolder();
-            var contentType = data.url.substring(5, data.url.indexOf(";"));
-            var bytes = Utilities.base64Decode(data.url.split(",")[1]);
-            var fileName = (data.title || data.key || "upload") + "_" + new Date().getTime();
+    let finalUrl = data.url;
 
-            var file = folder.createFile(Utilities.newBlob(bytes, contentType, fileName));
-            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-            finalUrl = "https://drive.google.com/uc?export=view&id=" + file.getId();
-        } catch (e) {
-            return responseJSON({ success: false, error: "Drive Upload Failed: " + e.toString() });
-        }
+    // Handle Base64 Drive Upload
+    if (finalUrl && finalUrl.toString().startsWith("data:")) {
+        const folder = getOrCreateFolder(DRIVE_FOLDER_NAME);
+        const contentType = finalUrl.substring(5, finalUrl.indexOf(";"));
+        const bytes = Utilities.base64Decode(finalUrl.split(",")[1]);
+        const fileName = (data.title || data.key || "upload") + "_" + Date.now();
+        const file = folder.createFile(Utilities.newBlob(bytes, contentType, fileName));
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        finalUrl = "https://drive.google.com/uc?export=view&id=" + file.getId();
     }
 
-    // Handle Graphics Updates (Overwrite existing key)
-    if (section === "Graphic") {
-        var key = data.key || data.type; // frontend sends key
-        var rows = sheet.getDataRange().getValues();
-        for (var i = 1; i < rows.length; i++) {
-            if (rows[i][1] === "Graphic" && rows[i][3] === key) { // Check Title column
+    // Handle Graphics (Update existing key)
+    if (section.toLowerCase() === "graphic") {
+        const key = data.key || data.title;
+        const values = sheet.getDataRange().getValues();
+        for (let i = 1; i < values.length; i++) {
+            if (String(values[i][1]).toLowerCase() === "graphic" && String(values[i][3]).toLowerCase() === key.toLowerCase()) {
                 sheet.getRange(i + 1, 5).setValue(finalUrl);
                 return responseJSON({ success: true, url: finalUrl });
             }
         }
-        // If not found, append (Section, Type, Title=Key, URL)
-        sheet.appendRow([new Date().getTime().toString(), "Graphic", "image", key, finalUrl]);
-        return responseJSON({ success: true, url: finalUrl });
     }
 
-    // Append standard media (Gallery/Hero)
-    var newId = data.id || new Date().getTime().toString();
-    sheet.appendRow([newId, section, data.type || 'image', data.title || '', finalUrl]);
+    const newId = data.id || Date.now().toString();
+    sheet.appendRow([newId, section, data.type || "image", data.title || "", finalUrl]);
     return responseJSON({ success: true, id: newId, url: finalUrl });
 }
 
 function deleteCMSMedia(id) {
-    var sheet = getOrCreateSheet(CMS_TAB_NAME);
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]) === String(id)) {
+    const sheet = getSheet(TABS.CMS);
+    const values = sheet.getDataRange().getValues();
+    for (let i = 1; i < values.length; i++) {
+        if (String(values[i][0]) === String(id)) {
             sheet.deleteRow(i + 1);
             return responseJSON({ success: true });
         }
     }
-    return responseJSON({ success: false, error: 'ID not found' });
+    return responseJSON({ success: false, error: "Media ID not found" });
 }
 
 function saveHeroConfig(data) {
-    var sheet = getOrCreateSheet(CMS_TAB_NAME);
-    var rows = sheet.getDataRange().getValues();
-    var found = false;
-    for (var i = 1; i < rows.length; i++) {
-        if (rows[i][1] === "Config" && rows[i][3] === "interval") {
+    const sheet = getSheet(TABS.CMS);
+    const values = sheet.getDataRange().getValues();
+    for (let i = 1; i < values.length; i++) {
+        if (String(values[i][1]).toLowerCase() === "config" && String(values[i][3]).toLowerCase() === "interval") {
             sheet.getRange(i + 1, 5).setValue(data.interval);
-            found = true; break;
+            return responseJSON({ success: true });
         }
     }
-    if (!found) sheet.appendRow([new Date().getTime(), "Config", "number", "interval", data.interval]);
+    sheet.appendRow([Date.now().toString(), "Config", "number", "interval", data.interval]);
     return responseJSON({ success: true });
 }
 
-
 // --- VAULT LOGIC ---
-function getVaults() {
-    var sheet = getOrCreateSheet('vaults');
-    var rows = sheet.getDataRange().getValues();
-    var headers = rows.shift();
-    var colMap = {};
-    headers.forEach(function (h, i) { colMap[h.toString().trim()] = i; });
-    var vaults = rows.map(function (row) {
-        return {
-            id: row[colMap['ID']], customerName: row[colMap['Customer Name']],
-            customerMobile: row[colMap['Customer Mobile']], sessionTitle: row[colMap['Session Title']],
-            sessionType: row[colMap['Session Type']], createdAt: row[colMap['Created At']],
-            status: row[colMap['Status']], workflowStatus: row[colMap['Workflow Status']],
-            vaultId: row[colMap['Vault ID']]
-        };
-    }).filter(function (v) { return v.id; });
+
+function getVaultsData() {
+    const sheet = getSheet(TABS.VAULTS);
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows.shift();
+    const vaults = rows.map(r => ({
+        id: String(r[0]), vaultId: r[1], sessionTitle: r[2], customerName: r[3],
+        customerMobile: String(r[4]), sessionType: r[5], status: r[6], createdAt: r[7], workflowStatus: r[8] || 'pending'
+    })).filter(v => v.id);
     return responseJSON(vaults);
 }
 
-function handleVault(data, action) {
-    var sheet = getOrCreateSheet('vaults');
-    var rows = sheet.getDataRange().getValues();
-    var headers = rows[0];
-    var colMap = {};
-    headers.forEach(function (h, i) { colMap[h.toString().trim()] = i; });
-
-    var rowIndex = -1;
-    for (var i = 1; i < rows.length; i++) {
-        if (String(rows[i][colMap['ID']]) === String(data.id)) { rowIndex = i + 1; break; }
+function handleVault(data) {
+    const sheet = getSheet(TABS.VAULTS);
+    const rows = sheet.getDataRange().getValues();
+    let foundRow = -1;
+    for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(data.id)) { foundRow = i + 1; break; }
     }
 
-    if (rowIndex === -1) {
-        var newRow = headers.map(function () { return ""; });
-        newRow[colMap['ID']] = data.id || new Date().getTime().toString();
-        newRow[colMap['Vault ID']] = data.vaultId;
-        newRow[colMap['Session Title']] = data.sessionTitle;
-        newRow[colMap['Customer Name']] = data.customerName;
-        newRow[colMap['Customer Mobile']] = data.customerMobile;
-        newRow[colMap['Session Type']] = data.sessionType;
-        newRow[colMap['Status']] = data.status || 'active';
-        newRow[colMap['Created At']] = new Date().toISOString();
-        newRow[colMap['Workflow Status']] = data.workflowStatus || 'pending';
-        sheet.appendRow(newRow);
+    if (foundRow === -1) {
+        sheet.appendRow([
+            data.id || Date.now().toString(), data.vaultId || "", data.sessionTitle || "",
+            data.customerName || "", data.customerMobile || "", data.sessionType || "",
+            data.status || "active", new Date().toISOString(), data.workflowStatus || "pending"
+        ]);
     } else {
-        var range = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
-        var rowValues = range.getValues()[0];
-        if (data.vaultId) rowValues[colMap['Vault ID']] = data.vaultId;
-        if (data.sessionTitle) rowValues[colMap['Session Title']] = data.sessionTitle;
-        if (data.customerName) rowValues[colMap['Customer Name']] = data.customerName;
-        if (data.status) rowValues[colMap['Status']] = data.status;
-        if (data.workflowStatus) rowValues[colMap['Workflow Status']] = data.workflowStatus;
-        range.setValues([rowValues]);
+        if (data.vaultId) sheet.getRange(foundRow, 2).setValue(data.vaultId);
+        if (data.sessionTitle) sheet.getRange(foundRow, 3).setValue(data.sessionTitle);
+        if (data.customerName) sheet.getRange(foundRow, 4).setValue(data.customerName);
+        if (data.status) sheet.getRange(foundRow, 7).setValue(data.status);
+        if (data.workflowStatus) sheet.getRange(foundRow, 9).setValue(data.workflowStatus);
     }
-    return responseJSON({ result: 'success' });
+    return responseJSON({ success: true });
 }
 
 function deleteVault(id) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('vaults');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]) === String(id)) { sheet.deleteRow(i + 1); return responseJSON({ result: 'success' }); }
+    const sheet = getSheet(TABS.VAULTS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(id)) { sheet.deleteRow(i + 1); return responseJSON({ success: true }); }
     }
-    return responseJSON({ result: 'error' });
+    return responseJSON({ success: false });
 }
 
-// --- HELPERS ---
-function getOrCreateSheet(name) {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(name);
-    if (!sheet) {
-        sheet = ss.insertSheet(name);
-        if (name === 'vaults') sheet.appendRow(['ID', 'Vault ID', 'Session Title', 'Customer Name', 'Customer Mobile', 'Session Type', 'Status', 'Created At', 'Workflow Status']);
-        if (name === 'studiocms') sheet.appendRow(['ID', 'Section', 'Type', 'Title', 'URL']);
-        if (name === 'booking') sheet.appendRow(['ID', 'Client Name', 'Mobile', 'Email', 'Event Type', 'Date', 'Status', 'Notes', 'Created At']);
-        if (name === 'message') sheet.appendRow(['Timestamp', 'Sender', 'Mobile', 'Email', 'Text', 'Replies', 'Status']);
-        if (name === 'clientlogin') sheet.appendRow(['Mobile', 'Name', 'Email', 'Created At', 'Last Login', 'Login Count']);
-    }
-    return sheet;
-}
+// --- BOOKING LOGIC ---
 
-// --- OTHER LOGIC (Bookings, Messages, Profiles) ---
-
-function getBookings() {
-    var sheet = getOrCreateSheet('booking');
-    var rows = sheet.getDataRange().getValues();
+function getBookingsData() {
+    const sheet = getSheet(TABS.BOOKINGS);
+    const rows = sheet.getDataRange().getValues();
     rows.shift();
-    var bookings = rows.map(function (r) {
-        return { id: r[0], clientName: r[1], mobile: r[2], eventType: r[4], date: r[5], status: r[6] };
-    });
+    const bookings = rows.map(r => ({
+        id: String(r[0]), clientName: r[1], mobile: String(r[2]), email: r[3], eventType: r[4], date: r[5], status: r[6]
+    }));
     return responseJSON(bookings);
 }
 
 function addBooking(data) {
-    var sheet = getOrCreateSheet('booking');
-    sheet.appendRow([data.id || new Date().getTime().toString(), data.clientName, data.mobile, data.email, data.eventType, data.date, 'pending', data.notes, new Date().toISOString()]);
-    return responseJSON({ result: 'success' });
+    const sheet = getSheet(TABS.BOOKINGS);
+    sheet.appendRow([
+        data.id || Date.now().toString(), data.clientName, data.mobile, data.email,
+        data.eventType, data.date, "pending", data.notes || "", new Date().toISOString()
+    ]);
+    return responseJSON({ success: true });
 }
 
 function updateBooking(data) {
-    var sheet = getOrCreateSheet('booking');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
+    const sheet = getSheet(TABS.BOOKINGS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][0]) === String(data.id)) {
             if (data.status) sheet.getRange(i + 1, 7).setValue(data.status);
-            return responseJSON({ result: 'success' });
+            return responseJSON({ success: true });
         }
     }
+    return responseJSON({ success: false });
 }
 
-function deleteBooking(id) {
-    var sheet = getOrCreateSheet('booking');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]) === String(id)) { sheet.deleteRow(i + 1); return responseJSON({ result: 'success' }); }
-    }
-}
+// --- MESSAGE LOGIC ---
 
-function getMessages() {
-    var sheet = getOrCreateSheet('message');
-    var rows = sheet.getDataRange().getValues();
+function getMessagesData() {
+    const sheet = getSheet(TABS.MESSAGES);
+    const rows = sheet.getDataRange().getValues();
     rows.shift();
-    var messages = rows.map(function (r) {
-        return { timestamp: r[0], sender: r[1], mobile: r[2], text: r[4], status: r[6] };
-    });
-    return responseJSON(messages);
+    const msgs = rows.map(r => ({
+        timestamp: r[0], sender: r[1], mobile: String(r[2]), email: r[3], text: r[4], status: r[6]
+    }));
+    return responseJSON(msgs);
 }
 
 function addMessage(data) {
-    var sheet = getOrCreateSheet('message');
-    sheet.appendRow([new Date().toISOString(), data.sender, data.mobile, data.email, data.text, '[]', 'received']);
-    return responseJSON({ result: 'success' });
+    const sheet = getSheet(TABS.MESSAGES);
+    sheet.appendRow([new Date().toISOString(), data.sender, data.mobile, data.email, data.text, "[]", "received"]);
+    return responseJSON({ success: true });
 }
 
 function updateMessage(data) {
-    var sheet = getOrCreateSheet('message');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
+    const sheet = getSheet(TABS.MESSAGES);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][2]) === String(data.mobile)) {
             if (data.status) sheet.getRange(i + 1, 7).setValue(data.status);
-            return responseJSON({ result: 'success' });
+            return responseJSON({ success: true });
         }
     }
+    return responseJSON({ success: false });
 }
 
-function getClientProfile(mobile) {
-    var sheet = getOrCreateSheet('clientlogin');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
+// --- PROFILE LOGIC ---
+
+function getProfileData(mobile) {
+    const sheet = getSheet(TABS.CLIENTS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][0]) === String(mobile)) {
-            return responseJSON({ found: true, name: rows[i][1], email: rows[i][2] });
+            return responseJSON({ found: true, name: rows[i][1], email: rows[i][2], loginCount: rows[i][5], lastLogin: rows[i][4] });
         }
     }
     return responseJSON({ found: false });
 }
 
-function updateClientProfile(data) {
-    var sheet = getOrCreateSheet('clientlogin');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
+function updateProfile(data) {
+    const sheet = getSheet(TABS.CLIENTS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][0]) === String(data.mobile)) {
             sheet.getRange(i + 1, 2).setValue(data.name);
             sheet.getRange(i + 1, 3).setValue(data.email);
-            return responseJSON({ result: 'success' });
+            return responseJSON({ success: true });
         }
     }
     sheet.appendRow([data.mobile, data.name, data.email, new Date().toISOString(), new Date().toISOString(), 1]);
-    return responseJSON({ result: 'success' });
+    return responseJSON({ success: true });
 }
 
-function logClientLogin(data) {
-    var sheet = getOrCreateSheet('clientlogin');
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
+function logLogin(data) {
+    const sheet = getSheet(TABS.CLIENTS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][0]) === String(data.mobile)) {
             sheet.getRange(i + 1, 5).setValue(new Date().toISOString());
-            var count = parseInt(rows[i][5] || 0) + 1;
-            sheet.getRange(i + 1, 6).setValue(count);
-            return responseJSON({ result: 'success' });
+            const currentCount = parseInt(rows[i][5] || 0);
+            sheet.getRange(i + 1, 6).setValue(currentCount + 1);
+            return responseJSON({ success: true });
         }
     }
-    return updateClientProfile(data);
+    return updateProfile(data); // Create profile if logging login for new user
+}
+
+// --- GLOBAL HELPERS ---
+
+function getSheet(name) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+        sheet = ss.insertSheet(name);
+        if (name === TABS.CMS) sheet.appendRow(["ID", "Section", "Type", "Title", "URL"]);
+        if (name === TABS.VAULTS) sheet.appendRow(["ID", "Vault ID", "Session Title", "Customer Name", "Customer Mobile", "Session Type", "Status", "Created At", "Workflow Status"]);
+        if (name === TABS.BOOKINGS) sheet.appendRow(["ID", "Client Name", "Mobile", "Email", "Event Type", "Date", "Status", "Notes", "Created At"]);
+        if (name === TABS.MESSAGES) sheet.appendRow(["Timestamp", "Sender", "Mobile", "Email", "Text", "Replies", "Status"]);
+        if (name === TABS.CLIENTS) sheet.appendRow(["Mobile", "Name", "Email", "Created At", "Last Login", "Login Count"]);
+    }
+    return sheet;
+}
+
+function getOrCreateFolder(name) {
+    const folders = DriveApp.getFoldersByName(name);
+    if (folders.hasNext()) return folders.next();
+    return DriveApp.createFolder(name);
+}
+
+function responseJSON(data) {
+    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }

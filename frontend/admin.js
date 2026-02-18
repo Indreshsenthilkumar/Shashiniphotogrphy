@@ -182,35 +182,33 @@ async function refreshData() {
 
     try {
         const t = Date.now(); // Cache buster
-        const [v, s, c, b, et, m] = await Promise.all([
+        const [v, s, b, et, m] = await Promise.all([
             safeFetch(`${API_URL}/vaults?sync=true&t=${t}`, 'Vaults'),
             safeFetch(`${API_URL}/vaults/selections?t=${t}`, 'Selections'),
-            fetch(`${CMS_SHEET_URL}?action=getCMS&t=${t}`).then(r => r.json()).catch(err => {
-                console.warn('[CMS] Sheet fetch failed, falling back to local:', err);
-                return safeFetch(`${API_URL}/cms?t=${t}`, 'CMS (Local Fallback)');
-            }),
             safeFetch(`${API_URL}/bookings?sync=true&t=${t}`, 'Bookings'),
             safeFetch(`${API_URL}/bookings/event-types?t=${t}`, 'EventTypes'),
             safeFetch(`${API_URL}/messages?sync=true&t=${t}`, 'Messages')
         ]);
 
+        // FETCH CMS FROM GOOGLE (MASTER)
+        const c = await fetch(`${CMS_SHEET_URL}?action=getCMS&t=${t}`).then(r => r.json()).catch(async (err) => {
+            console.warn('[CMS Sync] Sheet unreachable, checking local fallback:', err);
+            return await safeFetch(`${API_URL}/cms?t=${t}`, 'CMS (Local Fallback)');
+        });
+
         state.vaults = Array.isArray(v) ? v : [];
         state.selections = Array.isArray(s) ? s : [];
 
-        // Handle Object-based CMS
-        if (c && c.items && c.hero) {
+        // Handle CMS Sync - Sheet is absolute truth if available
+        if (c && typeof c === 'object') {
             state.cms = {
                 items: c.items || [],
                 hero: c.hero || { slides: [], interval: 5 },
                 graphics: c.graphics || {}
             };
+            console.log('[CMS Sync] Data synchronized from Master Source.');
         } else {
-            // Fallback: merge if partial data
-            state.cms = {
-                items: (c && c.items) ? c.items : (Array.isArray(c) ? c : (state.cms?.items || [])),
-                hero: (c && c.hero) ? c.hero : (state.cms?.hero || { slides: [], interval: 5 }),
-                graphics: (c && c.graphics) ? c.graphics : (state.cms?.graphics || {})
-            };
+            state.cms = state.cms || { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
         }
 
         state.bookings = Array.isArray(b) ? b : [];
@@ -1465,15 +1463,23 @@ window.previewHeroUpload = async (e) => {
 window.deleteHeroSlide = async (id) => {
     if (!confirm('Remove this slide from the hero section?')) return;
     try {
+        window.showLoader();
         const res = await fetch(CMS_SHEET_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'deleteMedia', id: id })
         });
         if (!res.ok) throw new Error('Delete request failed');
         showToast('Hero slide removed', 'success');
-        await refreshData();
-        renderAll();
+
+        // Small delay for Google
+        setTimeout(async () => {
+            await refreshData();
+            renderAll();
+            window.hideLoader();
+        }, 800);
     } catch (e) {
+        window.hideLoader();
+        console.error('Hero delete failed:', e);
         showToast('Failed to remove slide', 'error');
     }
 };
@@ -1721,16 +1727,26 @@ function fileToBase64(file) {
 window.deleteCMS = async (id) => {
     if (!confirm('Remove this photo from gallery?')) return;
     try {
-        await fetch(CMS_SHEET_URL, {
+        window.showLoader(); // Show loading while talking to Google
+        const res = await fetch(CMS_SHEET_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'deleteMedia', id: id })
         });
+
+        if (!res.ok) throw new Error('Network response was not ok');
+
         showToast('Item removed from gallery', 'success');
+        // Small delay to let Google process
+        setTimeout(async () => {
+            await refreshData();
+            renderAll();
+            window.hideLoader();
+        }, 800);
     } catch (e) {
-        showToast('Failed to remove item', 'error');
+        window.hideLoader();
+        console.error('Delete failed:', e);
+        showToast('Failed to remove item. Please try again.', 'error');
     }
-    await refreshData();
-    renderAll();
 }
 
 window.previewCMS = (id) => {

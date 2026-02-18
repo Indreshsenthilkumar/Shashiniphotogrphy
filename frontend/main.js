@@ -285,7 +285,7 @@ async function init() {
 
 async function fetchGlobalData() {
     try {
-        // 1. Fetch local CMS data first (Source of Truth for latest local uploads)
+        // 1. Fetch local CMS data first (Initial cache)
         const localData = await secureFetch(`${API_URL}/cms`);
         if (localData) {
             state.cms = {
@@ -296,17 +296,20 @@ async function fetchGlobalData() {
             console.log('[CMS Sync] Local cache loaded.');
         }
 
-        // 2. Fetch CMS data from Google Sheet Apps Script for global items
-        const sheetData = await fetch(`${CMS_SHEET_URL}?action=getCMS`).then(r => r.json()).catch(() => null);
+        // 2. Fetch CMS data from Google Sheet Apps Script (MASTER SOURCE)
+        // We use a cache buster 't' to ensure we get live data from Google
+        const sheetData = await fetch(`${CMS_SHEET_URL}?action=getCMS&t=${Date.now()}`).then(r => r.json()).catch(() => null);
 
         if (sheetData) {
-            // MERGE: Prefer sheet for gallery/hero slides, but keep local graphics if they were recently updated
-            state.cms.items = (sheetData.items && sheetData.items.length > 0) ? sheetData.items : state.cms.items;
-            state.cms.hero = sheetData.hero || state.cms.hero;
+            // SHEET IS MASTER: If sheet data arrives, it OVERWRITES local items/hero entirely.
+            // This allows users to truly "empty" the gallery from the sheet.
+            state.cms.items = sheetData.items || [];
+            if (sheetData.hero) {
+                state.cms.hero = sheetData.hero;
+            }
 
-            // Graphics merging: Only use sheet graphics if local doesn't have them
+            // Graphics merging logic
             if (sheetData.graphics) {
-                // If we are on public site (no local API), the sheet graphics MUST overwrite local state
                 const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
 
                 Object.keys(sheetData.graphics).forEach(key => {
@@ -316,7 +319,7 @@ async function fetchGlobalData() {
                     }
                 });
             }
-            console.log('[CMS Sync] Sheet data merged.');
+            console.log('[CMS Sync] Sheet data merged (Master).');
             return;
         }
     } catch (err) {

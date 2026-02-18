@@ -3,14 +3,14 @@
  * -----------------------------------------------------
  * Features:
  * 1. HIGH SPEED: Uses in-memory processing for rapid data retrieval.
- * 2. CASE INSENSITIVE: Actions like "getCMS" or "getcms" both work.
+ * 2. CASE INSENSITIVE: "getCMS" or "getcms" both work perfectly.
  * 3. MASTER SYNC: Real-time synchronization between Google Sheets and Web.
  * 4. ALL-IN-ONE: Vaults, Bookings, CMS, Messages, and Client Profiles.
  * 5. DRIVE STORAGE: Automatically handles base64 image uploads to Google Drive.
  * 
  * SETUP INSTRUCTIONS:
  * 1. Open Google Apps Script Editor.
- * 2. Delete ALL existing code.
+ * 2. Delete ALL existing code (Ensure you have NO other .gs files).
  * 3. Paste this entire script.
  * 4. Ensure your Sheet has these tabs: "studiocms", "vaults", "booking", "message", "clientlogin".
  * 5. Deploy as Web App -> Execute as: "Me" -> Who has access: "Anyone".
@@ -28,7 +28,16 @@ const DRIVE_FOLDER_NAME = "Studio_Website_Media";
 
 // --- MAIN ENTRY POINTS ---
 
+/**
+ * Handle GET requests (Fetching data)
+ * Note: Do NOT run this function directly in the editor. use 'testDoGet' instead.
+ */
 function doGet(e) {
+    // Prevent error if running manually without parameters
+    if (!e || !e.parameter) {
+        return ContentService.createTextOutput("Error: This script must be run as a Web App. Use the 'testDoGet' function for debugging.");
+    }
+
     const action = (e.parameter.action || "").toLowerCase();
 
     try {
@@ -45,7 +54,14 @@ function doGet(e) {
     }
 }
 
+/**
+ * Handle POST requests (Saving data)
+ */
 function doPost(e) {
+    if (!e || !e.postData) {
+        return ContentService.createTextOutput("Error: No POST data received.");
+    }
+
     const lock = LockService.getScriptLock();
     lock.tryLock(30000); // 30s lock for safety
 
@@ -88,7 +104,7 @@ function doPost(e) {
 function getCMSData() {
     const sheet = getSheet(TABS.CMS);
     const rows = sheet.getDataRange().getValues();
-    const headers = rows.shift(); // Remove: ID, Section, Type, Title, URL
+    const headers = rows.shift();
 
     const result = { items: [], hero: { slides: [], interval: 5 }, graphics: {} };
 
@@ -96,7 +112,7 @@ function getCMSData() {
         const [id, section, type, title, url] = row;
         if (!section) return;
 
-        const s = section.toLowerCase();
+        const s = section.toString().toLowerCase();
         if (s === 'gallery') result.items.push({ id: String(id), type, title, url });
         else if (s === 'heroslide') result.hero.slides.push({ id: String(id), type, title, url });
         else if (s === 'config' && String(title).toLowerCase() === 'interval') result.hero.interval = parseInt(url) || 5;
@@ -133,6 +149,7 @@ function saveCMSMedia(data) {
         const key = data.key || data.title;
         const values = sheet.getDataRange().getValues();
         for (let i = 1; i < values.length; i++) {
+            // Col 1=Section, Col 3=Title(Key)
             if (String(values[i][1]).toLowerCase() === "graphic" && String(values[i][3]).toLowerCase() === key.toLowerCase()) {
                 sheet.getRange(i + 1, 5).setValue(finalUrl);
                 return responseJSON({ success: true, url: finalUrl });
@@ -198,6 +215,7 @@ function handleVault(data) {
             data.status || "active", new Date().toISOString(), data.workflowStatus || "pending"
         ]);
     } else {
+        // Correctly updating columns based on their index (1-based)
         if (data.vaultId) sheet.getRange(foundRow, 2).setValue(data.vaultId);
         if (data.sessionTitle) sheet.getRange(foundRow, 3).setValue(data.sessionTitle);
         if (data.customerName) sheet.getRange(foundRow, 4).setValue(data.customerName);
@@ -245,6 +263,15 @@ function updateBooking(data) {
             if (data.status) sheet.getRange(i + 1, 7).setValue(data.status);
             return responseJSON({ success: true });
         }
+    }
+    return responseJSON({ success: false });
+}
+
+function deleteBooking(id) {
+    const sheet = getSheet(TABS.BOOKINGS);
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(data.id)) { sheet.deleteRow(i + 1); return responseJSON({ success: true }); }
     }
     return responseJSON({ success: false });
 }
@@ -327,10 +354,11 @@ function getSheet(name) {
     let sheet = ss.getSheetByName(name);
     if (!sheet) {
         sheet = ss.insertSheet(name);
+        // Initialize headers if creating for the first time
         if (name === TABS.CMS) sheet.appendRow(["ID", "Section", "Type", "Title", "URL"]);
         if (name === TABS.VAULTS) sheet.appendRow(["ID", "Vault ID", "Session Title", "Customer Name", "Customer Mobile", "Session Type", "Status", "Created At", "Workflow Status"]);
         if (name === TABS.BOOKINGS) sheet.appendRow(["ID", "Client Name", "Mobile", "Email", "Event Type", "Date", "Status", "Notes", "Created At"]);
-        if (name === TABS.MESSAGES) sheet.appendRow(["Timestamp", "Sender", "Mobile", "Email", "Text", "Replies", "Status"]);
+        if (name === TABS.MESSAGES) sheet.appendRow(["Timestamp", "Sender", "Mobile", "Email", "Text", 'Replies', "Status"]);
         if (name === TABS.CLIENTS) sheet.appendRow(["Mobile", "Name", "Email", "Created At", "Last Login", "Login Count"]);
     }
     return sheet;
@@ -344,4 +372,9 @@ function getOrCreateFolder(name) {
 
 function responseJSON(data) {
     return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- DEBUGGING UTILS ---
+function testDoGet() {
+    Logger.log(doGet({ parameter: { action: 'getcms' } }).getContent());
 }

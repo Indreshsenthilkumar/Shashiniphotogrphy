@@ -1,6 +1,6 @@
 const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymHcV4JOdFk5geINGLBPe0SUPV3quv2TL0yKs8nX2AzAGuf0Ika-0WY8A8wkWzV06Y/exec';
-const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbymHcV4JOdFk5geINGLBPe0SUPV3quv2TL0yKs8nX2AzAGuf0Ika-0WY8A8wkWzV06Y/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
+const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
 
 const app = document.getElementById('app');
 const loginBtn = document.querySelector('.profile-btn');

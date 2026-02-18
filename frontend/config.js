@@ -15,8 +15,8 @@ const isLocalhost = window.location.hostname === 'localhost' ||
 export const API_URL = isLocalhost ? 'http://127.0.0.1:5001/api' : PRODUCTION_API_URL;
 
 // Google Apps Script URLs (these work from anywhere)
-export const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
-export const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQTkkUUH6KSrajQCD4WLJ3uRT8ddBDqr-dQFIDwMAkFsAB9PXBZxnYmzo6SaHMP9iF/exec';
+export const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8yajS1Qwjipx_oeK19yYCZLVbm2-wcLwlH05x98fnuH5EzzlJLYpVwMX2fzndPAW1/exec';
+export const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbz8yajS1Qwjipx_oeK19yYCZLVbm2-wcLwlH05x98fnuH5EzzlJLYpVwMX2fzndPAW1/exec';
 
 console.log(`[Config] Running in ${isLocalhost ? 'LOCAL' : 'PRODUCTION'} mode`);
 console.log(`[Config] API URL: ${API_URL}`);

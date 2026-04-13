@@ -1,4 +1,5 @@
-const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const API_URL = isLocal ? 'http://localhost:5001/api' : 'https://shashiniphotogrphy-production.up.railway.app/api';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
 const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
 
@@ -146,7 +147,8 @@ async function init() {
     const closeMenuBtn = document.getElementById('close-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
 
-    // Auto-Sync background data every 60 seconds (Real-time update)
+    // Auto-Sync background data every 60 seconds (Real-time update) - DISABLED PREVENTING AUTO REFRESH
+    /*
     setInterval(async () => {
         const hashView = window.location.hash.substring(1) || 'home';
         await fetchGlobalData();
@@ -156,6 +158,7 @@ async function init() {
             if (state.view === 'home') initHeroCarousel();
         }
     }, 60000);
+    */
 
     if (hamburgerBtn && mobileMenu) {
         hamburgerBtn.onclick = () => mobileMenu.classList.add('active');
@@ -274,13 +277,15 @@ async function init() {
 
     render();
 
-    // Auto-refresh data every 60 seconds for client side
+    // Auto-refresh data every 60 seconds for client side - DISABLED PREVENTING AUTO REFRESH
+    /*
     setInterval(async () => {
         if (state.view === 'home' || state.view === 'gallery') {
             await fetchGlobalData();
             render();
         }
     }, 60000);
+    */
 }
 
 async function fetchGlobalData() {
@@ -891,7 +896,7 @@ function renderBookings() {
             
             <div id="calcom-embed-wrapper" style="max-width: 1000px; width: 100%; margin: 0 auto; height: 750px; border-radius: 30px; overflow: hidden; background: var(--card-bg); border: 1px solid var(--border-color);">
                 <!-- Cal inline embed code begins -->
-                <div style="width:100%;height:100%;overflow:scroll" id="my-cal-inline-shashini-studio"></div>
+                <div style="width:100%;height:100%;overflow:scroll" id="my-cal-inline-shashiniphotography"></div>
                 <!-- Cal inline embed code ends -->
             </div>
         </div>
@@ -902,6 +907,7 @@ function renderBookings() {
 
     Cal("init", "shashiniphotography", { origin: "https://app.cal.com" });
 
+<<<<<<< HEAD
     Cal.ns["shashiniphotography"]("inline", {
         elementOrSelector: "#my-cal-inline-shashini-studio",
         config: { "layout": "month_view", "useSlotsViewOnSmallScreen": "true" },
@@ -909,6 +915,15 @@ function renderBookings() {
     });
 
     Cal.ns["shashiniphotography"]("ui", { "hideEventTypeDetails": false, "layout": "month_view" });
+=======
+    Cal.ns.shashiniphotography("inline", {
+        elementOrSelector: "#my-cal-inline-shashiniphotography",
+        config: { "layout": "month_view", "useSlotsViewOnSmallScreen": "true" },
+        calLink: "indresh-j2lwto",
+    });
+
+    Cal.ns.shashiniphotography("ui", { "hideEventTypeDetails": false, "layout": "month_view" });
+>>>>>>> ca4e05f (Synchronize local updates: frontend UI refinements and backend fixes)
 }
 
 async function renderVault() {

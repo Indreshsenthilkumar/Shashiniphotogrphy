@@ -4151,4 +4151,14 @@ body.home-view:not(.scrolled) .brand-sub {
         margin-bottom: -20px !important;
         max-width: none !important;
     }
+
+    .mobile-menu .close-menu-btn {
+        align-self: flex-end;
+        margin-bottom: 20px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-primary);
+    }
 }

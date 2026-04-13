@@ -1,4 +1,5 @@
-const API_URL = 'https://shashiniphotogrphy-production.up.railway.app/api';
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const API_URL = isLocal ? 'http://localhost:5001/api' : 'https://shashiniphotogrphy-production.up.railway.app/api';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
 const CMS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzz7aLqytzbLn0fgfp0IFzhzsjUoyNEWzWDKLj-VRtnvLaNV959X8izhCfBbmCPkNF4/exec';
 
@@ -91,12 +92,14 @@ async function init() {
     renderAll();
     setupMobileMenu();
 
-    // Auto-refresh data every 30 seconds for "real-time" sync
+    // Auto-refresh data every 30 seconds for "real-time" sync - DISABLED PREVENTING AUTO REFRESH
+    /*
     setInterval(async () => {
         console.log('[Admin] Auto-refreshing data...');
         await refreshData();
         renderAll();
     }, 30000);
+    */
 
     // Header scroll listener
     window.addEventListener('scroll', () => {

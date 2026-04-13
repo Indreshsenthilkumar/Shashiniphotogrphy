@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
     root: './',
-    base: '/Shashiniphotogrphy/', // Set to your repository name
+    base: '/', // Set to / for root domain
     build: {
         outDir: '../docs',
         emptyOutDir: true,

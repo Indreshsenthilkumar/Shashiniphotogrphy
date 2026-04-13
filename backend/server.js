@@ -29,7 +29,9 @@ app.set('trust proxy', 1);
 console.log('[Server] Start-up: Trust Proxy enabled.');
 
 // SECURITY: Set security-related HTTP headers
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // SECURITY: Rate Limiting (DISABLED TEMPORARILY TO PREVENT RAILWAY CRASH)
 /*
@@ -69,4 +71,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`[Secure Server] Running on port ${PORT}`);
+    console.log(`[Secure Server] API Base URL: http://localhost:${PORT}/api`);
+    console.log(`[Secure Server] Verify your frontend config matches this port!`);
 });

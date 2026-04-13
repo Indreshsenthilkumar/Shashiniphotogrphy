@@ -31,7 +31,7 @@ async function test() {
         const files = res.data.files || [];
         console.log('SUCCESS! Folder reached.');
         console.log('Files count:', files.length);
-        files.forEach(f => console.log(`- ${f.name} (${f.mimeType})`));
+        files.forEach(f => console.log(`- ${f.name} (${f.mimeType}) [ID: ${f.id}]`));
 
     } catch (e) {
         console.error('FAILED!');
